@@ -1,0 +1,95 @@
+"use client";
+import React, {
+  createContext, useContext, useState,
+  useEffect, useRef, ReactNode,
+} from "react";
+import type { User, Match, Message, MediaItem } from "./types";
+import { listenAuthState }                           from "./firebaseAuth";
+import { listenUsers, listenMatches, listenMessages } from "./firebaseDB";
+import { listenMedia }                               from "./firebaseStorage";
+
+interface AppContextValue {
+  currentUser:    User | null;
+  setCurrentUser: (u: User | null) => void;
+  users:          User[];
+  matches:        Match[];
+  setMatches:     React.Dispatch<React.SetStateAction<Match[]>>;
+  messages:       Message[];
+  mediaItems:     MediaItem[];
+  loading:        boolean;
+}
+
+const AppContext = createContext<AppContextValue | null>(null);
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users,       setUsers]       = useState<User[]>([]);
+  const [matches,     setMatches]     = useState<Match[]>([]);
+  const [messages,    setMessages]    = useState<Message[]>([]);
+  const [mediaItems,  setMediaItems]  = useState<MediaItem[]>([]);
+  const [loading,     setLoading]     = useState(true);
+
+  // Holds the unsub functions for the Firestore data listeners
+  const dataUnsubs = useRef<(() => void)[]>([]);
+
+  const stopDataListeners = () => {
+    dataUnsubs.current.forEach(fn => fn());
+    dataUnsubs.current = [];
+    // Clear data so stale values don't flash on next login
+    setUsers([]);
+    setMatches([]);
+    setMessages([]);
+    setMediaItems([]);
+  };
+
+  const startDataListeners = () => {
+    // Guard: don't double-subscribe
+    if (dataUnsubs.current.length > 0) return;
+
+    dataUnsubs.current = [
+      listenUsers(setUsers),
+      listenMatches(setMatches),
+      listenMessages(setMessages),
+      listenMedia(setMediaItems),
+    ];
+  };
+
+  useEffect(() => {
+    // Auth listener — starts/stops Firestore listeners based on sign-in state
+    const unsubAuth = listenAuthState(user => {
+      if (user) {
+        setCurrentUser(user);
+        startDataListeners();
+      } else {
+        setCurrentUser(null);
+        stopDataListeners();
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      unsubAuth();
+      stopDataListeners();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <AppContext.Provider value={{
+      currentUser, setCurrentUser,
+      users,
+      matches, setMatches,
+      messages,
+      mediaItems,
+      loading,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp(): AppContextValue {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useApp must be inside AppProvider");
+  return ctx;
+}
