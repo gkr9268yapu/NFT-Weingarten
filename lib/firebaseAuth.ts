@@ -29,7 +29,6 @@ export async function signUp(
     email,
     role,
     verified: false,        // true once they click the email link
-    createdAt: Date.now(),
   } satisfies Omit<User, "password">);
 }
 
