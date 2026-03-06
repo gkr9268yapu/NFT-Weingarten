@@ -143,9 +143,12 @@ export default function MediaPage() {
                         <span style={{ fontSize:12 }}>Loading from Drive…</span>
                       </div>
                     ) : (
-                      <Image src={item.url} alt={item.filename} fill style={{ objectFit:"cover" }} unoptimized
-                        onError={() => setImgErrors(prev => new Set(prev).add(item.id))}
-                      />
+                        <img
+                          src={item.url}
+                          alt={item.filename}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }}
+                          onError={() => setImgErrors(prev => new Set(prev).add(item.id))}
+                        />
                     )}
                     <button onClick={() => handleDownload(item)} style={{
                       position:"absolute", top:10, right:10,
