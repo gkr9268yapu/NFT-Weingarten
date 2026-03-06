@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       requestBody: { role: "reader", type: "anyone" },
     });
 
-    const imageUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+    const imageUrl = `/api/image/${fileId}`;
     const today    = new Date().toLocaleDateString("en-GB");
 
     // Save metadata to Firestore so all users see it in real-time
