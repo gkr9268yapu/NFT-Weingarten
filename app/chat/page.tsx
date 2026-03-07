@@ -45,7 +45,7 @@ export default function ChatPage() {
       <Navbar />
 
       <style>{`
-        .chat-wrap  { max-width: 820px; margin: 0 auto; padding: 48px 28px 28px; }
+        .chat-wrap  { max-width: 820px; margin: 0 auto; padding: 48px 28px 28px; } 
         .chat-box   { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
         .chat-msgs  { height: 520px; overflow-y: auto; padding: 28px 28px 20px; }
         .chat-bar   { border-top: 1px solid rgba(255,255,255,.07); padding: 18px 28px; display: flex; gap: 12px; background: rgba(7,13,26,0.98); }

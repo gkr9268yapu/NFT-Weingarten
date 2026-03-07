@@ -183,7 +183,7 @@ export default function MediaPage() {
                 style={{ background: "rgba(255,255,255,.025)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 18, overflow: "hidden" }}
               >
                 {/* Image */}
-                <div className="media-card-img" style={{ height: 200, position: "relative", background: "rgba(255,255,255,.04)", overflow: "hidden" }}>
+                <div className="media-card-img" style={{ height: "auto", aspectRatio: "16/9", position: "relative", background: "rgba(255,255,255,.04)", overflow: "hidden" }}>
                   {imgErrors.has(item.id) ? (
                     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, color: "rgba(255,255,255,.2)" }}>
                       <span style={{ fontSize: 28 }}>🖼</span>
