@@ -31,7 +31,7 @@ export default function LoginPage() {
 
   if (loading) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#070d1a" }}>
-      <div style={{ fontSize:48, animation:"pulse 1.2s infinite" }}>⚽</div>
+    <img src="/logo.png" alt="Club Logo" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
     </div>
   );
 
@@ -69,8 +69,8 @@ export default function LoginPage() {
       <div className="slide-up" style={{ width:"100%", maxWidth:460, padding:"0 24px" }}>
 
         <div style={{ textAlign:"center", marginBottom:40 }}>
-          <div style={{ width:72, height:72, background:"linear-gradient(135deg,#00e676,#0070ff)", borderRadius:"50%", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:32, marginBottom:18, boxShadow:"0 0 40px rgba(0,230,118,.3)" }}>⚽</div>
-          <h1 style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:42, fontWeight:900, color:"#fff", letterSpacing:3, lineHeight:1 }}>FOOTBALL CLUB</h1>
+          <img src="/logo.png" alt="Club Logo" style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", marginBottom: 18, boxShadow: "0 0 40px rgba(0,230,118,.3)" }} />
+          <h1 style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:42, fontWeight:900, color:"#fff", letterSpacing:3, lineHeight:1 }}>NFT Weingarte</h1>
           <p style={{ color:"rgba(255,255,255,.35)", fontSize:13, marginTop:8, letterSpacing:1 }}>TEAM MANAGEMENT PLATFORM</p>
         </div>
 
