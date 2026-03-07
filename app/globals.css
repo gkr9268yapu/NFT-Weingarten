@@ -53,3 +53,99 @@ a { text-decoration: none; }
   align-items: center;
   justify-content: center;
 }
+
+/* ── Mobile Responsive ── */
+@media (max-width: 768px) {
+
+  /* Navbar */
+  nav {
+    padding: 0 16px !important;
+    height: auto !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  /* Nav links — smaller text */
+  nav a,
+  nav button {
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* Hide label text on nav links, show only icons */
+  .nav-label {
+    display: none !important;
+  }
+
+  /* Main content padding */
+  main {
+    padding: 24px 16px !important;
+  }
+
+  /* Page headings */
+  h1 {
+    font-size: 32px !important;
+  }
+
+  h2 {
+    font-size: 24px !important;
+  }
+
+  /* Match grid — single column */
+  .match-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Media grid — single column */
+  .media-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Header row — stack vertically */
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+
+  /* Buttons full width on mobile */
+  .header-actions {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Chat input bar */
+  .chat-input-bar {
+    padding: 12px 16px !important;
+  }
+
+  /* Modal full screen on mobile */
+  .slide-up {
+    width: 95vw !important;
+    max-height: 95vh !important;
+    padding: 24px 20px !important;
+  }
+
+  /* Login card */
+  .login-card {
+    padding: 28px 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 26px !important;
+  }
+
+  /* Stack availability buttons */
+  .avail-buttons {
+    flex-direction: column !important;
+  }
+
+  /* Nav user name — hide on very small screens */
+  .nav-username {
+    display: none !important;
+  }
+}

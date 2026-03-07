@@ -104,7 +104,7 @@ export default function ChatPage() {
               )}
             </div>
             {/* Input */}
-            <div style={{ borderTop:"1px solid rgba(255,255,255,.07)", padding:"18px 28px", display:"flex", gap:12 }}>
+            <div className="chat-input-bar" style={{ borderTop:"1px solid rgba(255,255,255,.07)", padding:"18px 28px", display:"flex", gap:12 }}>
               <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key==="Enter" && handleSend()} placeholder="Type a message…"
                 style={{ flex:1, background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.1)", borderRadius:12, padding:"13px 18px", color:"#fff", fontSize:14 }}
               />

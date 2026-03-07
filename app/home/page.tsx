@@ -80,7 +80,7 @@ export default function HomePage() {
     <div>
       <Navbar />
       <main style={{ maxWidth:1140, margin:"0 auto", padding:"48px 28px" }}>
-        <div className="fade-in" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:36 }}>
+        <div className="fade-in page-header" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:36 }}>
           <div>
             <h1 style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:50, fontWeight:900, letterSpacing:1, textTransform:"uppercase", lineHeight:1 }}>
               Upcoming <span style={{ color:"#00e676" }}>Matches</span>
@@ -104,7 +104,7 @@ export default function HomePage() {
               <p style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:22, letterSpacing:1 }}>No upcoming matches</p>
             </div>
           ) : (
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(360px,1fr))", gap:28 }}>
+              <div className="match-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(360px,1fr))", gap:28 }}>
               {activeMatches.map(m => (
                 <MatchCard key={m.id} match={m} currentUser={currentUser}
                   onAvailability={handleAvailability}

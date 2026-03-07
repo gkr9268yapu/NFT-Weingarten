@@ -37,7 +37,7 @@ export default function Navbar() {
     }}>
       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
         <div style={{ width:38, height:38, background:"linear-gradient(135deg,#00e676,#0070ff)", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, boxShadow:"0 0 16px rgba(0,230,118,.35)" }}>⚽</div>
-        <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 20, letterSpacing: 2 }}>Nepalese Football Team Weingarten</span>
+        <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 20, letterSpacing: 2 }}>NFT Weingarten</span>
       </div>
 
       <div style={{ display:"flex", gap:4 }}>
@@ -51,8 +51,9 @@ export default function Navbar() {
               fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700,
               fontSize:15, letterSpacing:.5, textTransform:"uppercase",
               display:"flex", alignItems:"center", gap:6,
-            }}>{icon} {label}</Link>
-          );
+            }}>
+              {icon} <span className="nav-label">{label}</span>
+            </Link>          );
         })}
       </div>
 

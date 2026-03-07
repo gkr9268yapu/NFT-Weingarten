@@ -73,7 +73,7 @@ export default function MediaPage() {
       <main style={{ maxWidth:1140, margin:"0 auto", padding:"48px 28px" }}>
 
         {/* Header */}
-        <div className="fade-in" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:36 }}>
+        <div className="fade-in page-header" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:36 }}>
           <div>
             <h1 style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:50, fontWeight:900, letterSpacing:1, textTransform:"uppercase", lineHeight:1 }}>
               Media <span style={{ color:"#00e676" }}>Gallery</span>
@@ -133,7 +133,7 @@ export default function MediaPage() {
               </p>
             </div>
           ) : (
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:24 }}>
+              <div className="media-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:24 }}>
               {mediaItems.map(item => (
                 <div key={item.id} className="card" style={{ background:"rgba(255,255,255,.025)", border:"1px solid rgba(255,255,255,.07)", borderRadius:18, overflow:"hidden" }}>
                   <div style={{ height:220, position:"relative", background:"rgba(255,255,255,.04)" }}>
