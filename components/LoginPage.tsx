@@ -70,7 +70,7 @@ export default function LoginPage() {
 
         <div style={{ textAlign:"center", marginBottom:40 }}>
           <img src="/logo.png" alt="Club Logo" style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", marginBottom: 18, boxShadow: "0 0 40px rgba(0,230,118,.3)" }} />
-          <h1 style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:42, fontWeight:900, color:"#fff", letterSpacing:3, lineHeight:1 }}>NFT Weingarte</h1>
+          <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 42, fontWeight: 900, color: "#fff", letterSpacing: 3, lineHeight: 1 }}>NFT Weingarten</h1>
           <p style={{ color:"rgba(255,255,255,.35)", fontSize:13, marginTop:8, letterSpacing:1 }}>TEAM MANAGEMENT PLATFORM</p>
         </div>
 

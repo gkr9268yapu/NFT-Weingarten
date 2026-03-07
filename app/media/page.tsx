@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import Navbar from "@/components/Navbar";
@@ -16,10 +16,13 @@ export default function MediaPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [preview, setPreview] = useState<MediaItem | null>(null);
 
-  if (loading) return (
+  useEffect(() => {
+    if (!loading && !currentUser) router.push("/");
+  }, [loading, currentUser, router]);
+
+  if (loading || !currentUser) return (
     <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
   );
-  if (!currentUser) { router.push("/"); return null; }
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

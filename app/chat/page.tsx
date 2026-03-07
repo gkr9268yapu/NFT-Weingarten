@@ -47,7 +47,7 @@ export default function ChatPage() {
       <style>{`
         .chat-wrap  { max-width: 820px; margin: 0 auto; padding: 48px 28px 28px; }
         .chat-box   { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.07); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
-        .chat-msgs  { height: 520px; overflow-y: auto; padding: 20px 20px 20px; }
+        .chat-msgs  { height: 520px; overflow-y: auto; padding: 28px 28px 20px; }
         .chat-bar   { border-top: 1px solid rgba(255,255,255,.07); padding: 18px 28px; display: flex; gap: 12px; background: rgba(7,13,26,0.98); }
         .chat-input { flex: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 13px 18px; color: #fff; font-size: 14px; font-family: 'Barlow', sans-serif; }
         .chat-send  { background: linear-gradient(135deg,#00e676,#00c853); color: #070d1a; border: none; padding: 13px 28px; border-radius: 12px; font-family: 'Barlow Condensed',sans-serif; font-weight: 800; font-size: 17px; box-shadow: 0 4px 16px rgba(0,230,118,.3); cursor: pointer; }
@@ -56,7 +56,7 @@ export default function ChatPage() {
           .chat-wrap { padding: 24px 12px 16px !important; }
           .chat-wrap h1 { font-size: 32px !important; }
           .chat-box  { border-radius: 16px; }
-          .chat-msgs { height: calc(100svh - 300px) !important; padding: 10px 12px 8px !important; }
+          .chat-msgs { height: calc(100svh - 320px) !important; padding: 12px 12px 8px !important; }
           .chat-bar  { padding: 10px 12px !important; gap: 8px !important; }
           .chat-input { padding: 11px 14px !important; font-size: 14px !important; }
           .chat-send  { padding: 11px 18px !important; font-size: 15px !important; }
@@ -76,7 +76,7 @@ export default function ChatPage() {
               {messages.map(msg => {
                 const isMe = msg.user === currentUser.name;
                 return (
-                  <div key={msg.id} className="msg-row" style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 10, marginBottom: 10, alignItems: "flex-start", position: "relative" }}>
+                  <div key={msg.id} className="msg-row" style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 10, marginBottom: 22, alignItems: "flex-start", position: "relative" }}>
                     {/* Avatar */}
                     <div style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, background: isMe ? "linear-gradient(135deg,#00e676,#00c853)" : "linear-gradient(135deg,#2a3a5c,#1a2540)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: isMe ? "#070d1a" : "#fff" }}>
                       {msg.user[0]}
