@@ -153,7 +153,9 @@ a {
   justify-content: center;
 }
 
-/* ── Mobile fixes ─────────────────────────────────────────── */
+/* ════════════════════════════════════════
+   MOBILE ONLY — max-width: 768px
+════════════════════════════════════════ */
 @media (max-width: 768px) {
 
   /* No horizontal scroll */
@@ -168,33 +170,31 @@ a {
     max-width: 100vw;
   }
 
-    body:has(.chat-wrap) {
-      overflow: hidden !important;
-      position: fixed !important;
-      width: 100% !important;
-    }
+  /* Lock body scroll on chat page */
+  body:has(.chat-wrap) {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
 
-  /* ── FIX 1: Reduce top gap on all pages ── */
-/* ── FIX 1: Reduce top gap on all pages ── */
-main {
-  padding-top: 0px !important;
-  padding-bottom: 110px !important;
-  padding-left: 14px !important;
-  padding-right: 14px !important;
-}
+  html:has(.chat-wrap) {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
 
-.page-main {
-  padding-top: 0px !important;
-  padding-bottom: 110px !important;
-  padding-left: 14px !important;
-  padding-right: 14px !important;
-}
+  /* ── Home & Media: remove top gap ── */
+  main,
+  .page-main {
+    padding-top: 0 !important;
+    padding-bottom: 110px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
 
   h1 {
     font-size: 28px !important;
   }
 
-  /* Modals full width on mobile */
+  /* Modals */
   .slide-up {
     width: 95vw !important;
     max-height: 90vh !important;
@@ -202,33 +202,33 @@ main {
     padding: 24px 18px !important;
   }
 
-/* ── FIX 2: Chat locked between top bar and bottom nav ── */
-.chat-wrap {
-  position: fixed !important;
-  top: 56px !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 90px !important;
-  height: auto !important;
-  padding: 12px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  margin: 0 !important;
-  max-width: 100% !important;
-}
+  /* ── Chat: fully fixed between top bar and bottom nav ── */
+  .chat-wrap {
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 90px !important;
+    height: auto !important;
+    padding: 10px 12px 0 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
 
-.chat-wrap h1 {
-  font-size: 24px !important;
-  margin-bottom: 2px !important;
-}
+  .chat-wrap h1 {
+    font-size: 22px !important;
+    margin-bottom: 2px !important;
+  }
 
-.chat-wrap p {
-  font-size: 11px !important;
-  margin-bottom: 10px !important;
-}
+  .chat-wrap p {
+    font-size: 11px !important;
+    margin-bottom: 8px !important;
+  }
 
-  /* Chat box fills remaining space */
+  /* Chat box fills all remaining space */
   .chat-box {
     flex: 1 !important;
     min-height: 0 !important;
@@ -237,17 +237,17 @@ main {
     overflow: hidden !important;
   }
 
-  /* Messages scrolls inside */
+  /* Messages scroll inside box only */
   .chat-msgs {
     flex: 1 !important;
     height: auto !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
-    padding: 12px !important;
+    padding: 10px !important;
   }
 
-  /* Input bar never moves */
+  /* Input bar pinned at bottom */
   .chat-bar {
     flex-shrink: 0 !important;
     padding: 10px 12px !important;
@@ -260,11 +260,11 @@ main {
   }
 
   .chat-send {
-    padding: 11px 18px !important;
+    padding: 11px 16px !important;
     font-size: 15px !important;
   }
 
-  /* Prevent children breaking layout */
+  /* Prevent overflow */
   .page-main>*,
   main>* {
     max-width: 100% !important;
