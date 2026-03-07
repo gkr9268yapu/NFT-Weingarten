@@ -168,6 +168,12 @@ a {
     max-width: 100vw;
   }
 
+    body:has(.chat-wrap) {
+      overflow: hidden !important;
+      position: fixed !important;
+      width: 100% !important;
+    }
+
   /* ── FIX 1: Reduce top gap on all pages ── */
 /* ── FIX 1: Reduce top gap on all pages ── */
 main {

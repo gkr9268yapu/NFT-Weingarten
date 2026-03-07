@@ -79,7 +79,7 @@ export default function HomePage() {
   return (
     <div>
       <Navbar />
-      <main style={{ maxWidth: 1140, margin: "0 auto", padding: "16px 28px" }} className="page-main">
+      <main style={{ maxWidth: 1140, margin: "0 auto", padding: "0px 28px" }} className="page-main">
         <div className="fade-in" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36 }}>
           <div>
             <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 50, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", lineHeight: 1 }}>

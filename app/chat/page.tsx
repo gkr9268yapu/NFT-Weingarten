@@ -67,7 +67,7 @@ export default function ChatPage() {
               {messages.map(msg => {
                 const isMe = msg.user === currentUser.name;
                 return (
-                  <div key={msg.id} className="msg-row" style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 10, marginBottom: 22, alignItems: "flex-start", position: "relative" }}>
+                  <div key={msg.id} className="msg-row" style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 10, marginBottom: 6, alignItems: "flex-start", position: "relative" }}>
                     {/* Avatar */}
                     <div style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, background: isMe ? "linear-gradient(135deg,#00e676,#00c853)" : "linear-gradient(135deg,#2a3a5c,#1a2540)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: isMe ? "#070d1a" : "#fff" }}>
                       {msg.user[0]}
