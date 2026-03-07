@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from "firebase/auth";
+import { isHostEmail } from "./hostEmails";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import type { Role, User } from "./types";
@@ -15,23 +16,22 @@ export async function signUp(
   name: string,
   email: string,
   password: string,
-  role: Role
+  role: Role,
 ): Promise<void> {
+  const assignedRole: Role = isHostEmail(email) ? "host" : "user"; // ← add this
+
   const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-  // Send email verification
   await sendEmailVerification(cred.user);
 
-  // Store extra profile data in Firestore
   await setDoc(doc(db, "users", cred.user.uid), {
-    id:       cred.user.uid,
+    id: cred.user.uid,
     name,
     email,
-    role,
-    verified: false,        // true once they click the email link
+    role: assignedRole,  // ← change from `role` to `role: assignedRole`
+    verified: false,
   } satisfies Omit<User, "password">);
 }
-
 /* ── Log in ───────────────────────────────────────────────── */
 export async function logIn(
   email: string,

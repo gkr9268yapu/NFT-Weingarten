@@ -56,7 +56,7 @@ export default function ChatPage() {
           .chat-wrap { padding: 24px 12px 16px !important; }
           .chat-wrap h1 { font-size: 32px !important; }
           .chat-box  { border-radius: 16px; }
-          .chat-msgs { height: calc(100svh - 320px) !important; padding: 12px 12px 8px !important; }
+          .chat-msgs { padding: 12px !important; }
           .chat-bar  { padding: 10px 12px !important; gap: 8px !important; }
           .chat-input { padding: 11px 14px !important; font-size: 14px !important; }
           .chat-send  { padding: 11px 18px !important; font-size: 15px !important; }

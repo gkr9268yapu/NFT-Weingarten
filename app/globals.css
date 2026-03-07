@@ -1,8 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: #070d1a;
@@ -11,141 +19,205 @@ body {
   min-height: 100vh;
 }
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #0a0f1e; }
-::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 5px;
+}
 
-input, textarea, button, select { font-family: 'Barlow', sans-serif; }
-input:focus, textarea:focus { outline: none; border-color: #00e676 !important; }
-button { cursor: pointer; }
-a { text-decoration: none; }
+::-webkit-scrollbar-track {
+  background: #0a0f1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e3a5f;
+  border-radius: 3px;
+}
+
+input,
+textarea,
+button,
+select {
+  font-family: 'Barlow', sans-serif;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #00e676 !important;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+}
 
 /* ── Animations ── */
-@keyframes fadeIn  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse   { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 
-.fade-in  { animation: fadeIn  0.35s ease both; }
-.slide-up { animation: slideUp 0.4s  ease both; }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .55;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease both;
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease both;
+}
 
 /* ── Interactive states ── */
-.nav-link  { transition: all 0.2s; }
-.nav-link:hover { opacity: 0.82; }
+.nav-link {
+  transition: all 0.2s;
+}
 
-.card { transition: transform 0.2s, box-shadow 0.2s; }
-.card:hover { transform: translateY(-4px); box-shadow: 0 14px 42px rgba(0,230,118,0.1); }
+.nav-link:hover {
+  opacity: 0.82;
+}
 
-.avail-btn { transition: all 0.15s; }
-.avail-btn:hover { filter: brightness(1.1); transform: scale(1.02); }
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-.upload-zone { transition: all 0.2s; }
-.upload-zone:hover { border-color: rgba(0,230,118,0.5) !important; background: rgba(0,230,118,0.04) !important; }
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 42px rgba(0, 230, 118, 0.1);
+}
 
-.msg-row:hover .react-trigger { opacity: 1 !important; }
-.emoji-btn:hover { transform: scale(1.35) !important; }
+.avail-btn {
+  transition: all 0.15s;
+}
+
+.avail-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.upload-zone {
+  transition: all 0.2s;
+}
+
+.upload-zone:hover {
+  border-color: rgba(0, 230, 118, 0.5) !important;
+  background: rgba(0, 230, 118, 0.04) !important;
+}
+
+.msg-row:hover .react-trigger {
+  opacity: 1 !important;
+}
+
+.emoji-btn:hover {
+  transform: scale(1.35) !important;
+}
 
 /* ── Overlay ── */
 .overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.82);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
   z-index: 300;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* ── Mobile Responsive ── */
+/* ── Mobile fixes ─────────────────────────────────────────── */
 @media (max-width: 768px) {
 
-  /* Navbar */
-  nav {
-    padding: 0 16px !important;
-    height: auto !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+  /* No horizontal scroll anywhere */
+  html,
+  body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    position: relative;
+    overscroll-behavior-x: none;
   }
 
-  /* Nav links — smaller text */
-  nav a,
-  nav button {
-    padding: 7px 10px !important;
-    font-size: 12px !important;
+  /* Prevent any element from causing horizontal overflow */
+  * {
+    max-width: 100vw;
   }
 
-  /* Hide label text on nav links, show only icons */
-  .nav-label {
-    display: none !important;
-  }
-
-  /* Main content padding */
+  /* All pages get bottom padding so content never hides under pill nav */
+  .page-main,
   main {
-    padding: 24px 16px !important;
+    padding-bottom: 110px !important;
   }
 
-  /* Page headings */
+  /* Page headings smaller on mobile */
   h1 {
     font-size: 32px !important;
   }
 
-  h2 {
-    font-size: 24px !important;
-  }
-
-  /* Match grid — single column */
-  .match-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Media grid — single column */
-  .media-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Header row — stack vertically */
-  .page-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 16px !important;
-  }
-
-  /* Buttons full width on mobile */
-  .header-actions {
-    width: 100% !important;
-    flex-wrap: wrap !important;
-  }
-
-  /* Chat input bar */
-  .chat-input-bar {
-    padding: 12px 16px !important;
-  }
-
-  /* Modal full screen on mobile */
+  /* Modals full width on mobile */
   .slide-up {
     width: 95vw !important;
-    max-height: 95vh !important;
-    padding: 24px 20px !important;
+    max-height: 90vh !important;
+    overflow-y: auto;
+    padding: 24px 18px !important;
   }
 
-  /* Login card */
-  .login-card {
-    padding: 28px 20px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  h1 {
-    font-size: 26px !important;
+  /* Chat specific — fully contained, no page scroll */
+  .chat-wrap {
+    padding-bottom: 8px !important;
   }
 
-  /* Stack availability buttons */
-  .avail-buttons {
+  /* Chat box fills available height between top bar and pill nav */
+  .chat-box {
+    height: calc(100svh - 56px - 110px - 120px);
+    display: flex !important;
     flex-direction: column !important;
   }
 
-  /* Nav user name — hide on very small screens */
-  .nav-username {
-    display: none !important;
+  /* Messages area fills remaining space */
+  .chat-msgs {
+    flex: 1 !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  /* Input bar always at bottom of chat box */
+  .chat-bar {
+    flex-shrink: 0 !important;
+  }
+
+  /* Prevent any child from breaking layout */
+  .page-main>*,
+  main>* {
+    max-width: 100% !important;
+    overflow-x: hidden;
   }
 }

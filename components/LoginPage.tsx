@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { signUp, logIn } from "@/lib/firebaseAuth";
 import { useApp } from "@/lib/AppContext";
 import type { Role } from "@/lib/types";
-
+import { isHostEmail } from "@/lib/hostEmails";
 const IS = {
   width: "100%",
   background: "rgba(255,255,255,0.05)",
@@ -76,37 +76,48 @@ export default function LoginPage() {
 
         <div style={{ background:"rgba(255,255,255,.035)", border:"1px solid rgba(255,255,255,.08)", borderRadius:24, padding:"36px 32px", backdropFilter:"blur(20px)" }}>
 
-          {/* Role toggle */}
-          <p style={{ fontSize:11, color:"rgba(255,255,255,.35)", letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>Select Role</p>
-          <div style={{ display:"flex", gap:8, background:"rgba(0,0,0,.3)", borderRadius:14, padding:4, marginBottom:24 }}>
-            {(["user","host"] as Role[]).map(r => (
-              <button key={r} onClick={() => { setRole(r); setError(""); }} style={{
-                flex:1, padding:"11px", borderRadius:10, border:"none",
-                background: role===r ? "#00e676" : "transparent",
-                color: role===r ? "#070d1a" : "rgba(255,255,255,.45)",
-                fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700, fontSize:15, letterSpacing:.5, transition:"all .2s",
-              }}>{r==="user" ? "👤 Player" : "⭐ Host"}</button>
-            ))}
-          </div>
-
           {/* Mode tabs */}
-          <div style={{ display:"flex", gap:8, marginBottom:28 }}>
-            {(["login","signup"] as const).map(m => (
+          <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
+            {(["login", "signup"] as const).map(m => (
               <button key={m} onClick={() => { setMode(m); setError(""); }} style={{
-                flex:1, padding:"11px", borderRadius:10,
-                border:`2px solid ${mode===m ? "#00e676" : "rgba(255,255,255,.08)"}`,
-                background:"transparent",
-                color: mode===m ? "#00e676" : "rgba(255,255,255,.4)",
-                fontWeight:600, fontSize:14, transition:"all .2s",
-              }}>{m==="login" ? "Log In" : "Sign Up"}</button>
+                flex: 1, padding: "11px", borderRadius: 10,
+                border: `2px solid ${mode === m ? "#00e676" : "rgba(255,255,255,.08)"}`,
+                background: "transparent",
+                color: mode === m ? "#00e676" : "rgba(255,255,255,.4)",
+                fontWeight: 600, fontSize: 14, transition: "all .2s",
+              }}>{m === "login" ? "Log In" : "Sign Up"}</button>
             ))}
           </div>
 
-          {mode==="signup" && <input value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" style={IS} />}
-          <input type="email"    value={email}    onChange={e => setEmail(e.target.value)}    placeholder="Email Address" style={IS} />
+          {mode === "signup" && <input value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" style={IS} />}
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" style={IS} />
+
+          {/* Role selector — shows after email is typed in signup mode */}
+          {mode === "signup" && (
+            isHostEmail(email) ? (
+              <>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,.35)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Select Role</p>
+                <div style={{ display: "flex", gap: 8, background: "rgba(0,0,0,.3)", borderRadius: 14, padding: 4, marginBottom: 14 }}>
+                  {(["user", "host"] as Role[]).map(r => (
+                    <button key={r} onClick={() => { setRole(r); setError(""); }} style={{
+                      flex: 1, padding: "11px", borderRadius: 10, border: "none",
+                      background: role === r ? "#00e676" : "transparent",
+                      color: role === r ? "#070d1a" : "rgba(255,255,255,.45)",
+                      fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: .5, transition: "all .2s",
+                    }}>{r === "user" ? "👤 Player" : "⭐ Host"}</button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ marginBottom: 14, padding: "10px 16px", borderRadius: 10, background: "rgba(0,230,118,.06)", border: "1px solid rgba(0,230,118,.15)", color: "rgba(255,255,255,.5)", fontSize: 13 }}>
+                👤 Signing up as Player
+              </div>
+            )
+          )}
+
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password"
-            style={{ ...IS, marginBottom:6 }}
-            onKeyDown={e => e.key==="Enter" && (mode==="login" ? handleLogin() : handleSignup())}
+            style={{ ...IS, marginBottom: 6 }}
+            onKeyDown={e => e.key === "Enter" && (mode === "login" ? handleLogin() : handleSignup())}
           />
 
           {error && (
