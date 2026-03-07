@@ -52,15 +52,6 @@ export default function ChatPage() {
         .chat-input { flex: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 13px 18px; color: #fff; font-size: 14px; font-family: 'Barlow', sans-serif; }
         .chat-send  { background: linear-gradient(135deg,#00e676,#00c853); color: #070d1a; border: none; padding: 13px 28px; border-radius: 12px; font-family: 'Barlow Condensed',sans-serif; font-weight: 800; font-size: 17px; box-shadow: 0 4px 16px rgba(0,230,118,.3); cursor: pointer; }
 
-        @media (max-width: 768px) {
-          .chat-wrap { padding: 24px 12px 16px !important; }
-          .chat-wrap h1 { font-size: 32px !important; }
-          .chat-box  { border-radius: 16px; }
-          .chat-msgs { padding: 12px !important; }
-          .chat-bar  { padding: 10px 12px !important; gap: 8px !important; }
-          .chat-input { padding: 11px 14px !important; font-size: 14px !important; }
-          .chat-send  { padding: 11px 18px !important; font-size: 15px !important; }
-        }
       `}</style>
 
       <main className="chat-wrap">
