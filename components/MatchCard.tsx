@@ -20,8 +20,8 @@ export default function MatchCard({ match, currentUser, onAvailability, onDetail
     <div className="card" style={{ background: "rgba(255,255,255,.025)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 22, overflow: "hidden" }}>
 
       {/* Banner image */}
-      <div style={{ position: "relative", height: 215 }}>
-        <Image src={match.image} alt={match.title} fill style={{ objectFit: "cover" }} unoptimized />
+      <div style={{ position: "relative", height: "auto", aspectRatio: "16/9" }}>
+      <Image src={match.image} alt={match.title} fill style={{ objectFit: "cover" }} unoptimized />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,.1) 0%, rgba(7,13,26,.98) 100%)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,rgba(0,230,118,.06),transparent 60%)" }} />
 
