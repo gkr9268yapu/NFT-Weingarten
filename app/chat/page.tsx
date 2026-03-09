@@ -41,7 +41,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div style={{ height: "calc(100dvh - 99px)", paddingTop: 56, display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
+    <div className="chat-page-wrap" style={{ height: "calc(100dvh - 106px)", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
       <Navbar />
 
       {/* fills space between navbar and bottom */}
@@ -134,6 +134,7 @@ export default function ChatPage() {
 
       <style>{`
         @media (max-width: 768px) {
+          .chat-page-wrap { padding-top: 56px !important; }
           .chat-outer { padding: 10px 12px 0 12px !important; }
           .chat-outer h1 { font-size: 26px !important; margin-bottom: 2px !important; }
           .chat-outer p  { font-size: 11px !important; margin-bottom: 8px !important; }
