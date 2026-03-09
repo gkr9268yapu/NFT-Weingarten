@@ -14,6 +14,8 @@ const LINKS = [
 export default function Navbar() {
   const { currentUser, setCurrentUser } = useApp();
   const pathname = usePathname();
+  const isChatPage = pathname === "/chat";
+
   const router = useRouter();
 
   const [desktopOpen, setDesktopOpen] = useState(false);
@@ -107,8 +109,10 @@ export default function Navbar() {
             height: 56px;
             background: rgba(7,13,26,0.97);
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 200;
             backdrop-filter: blur(16px);
           }
@@ -223,7 +227,7 @@ export default function Navbar() {
       </div>
 
       {/* ════════ MOBILE BOTTOM PILL NAV ════════ */}
-      <div className="mobile-btm-spacer" />
+      {!isChatPage && <div className="mobile-btm-spacer" />}
 
       <div className="mobile-nav-wrap">
         <nav className="mobile-nav-pill">

@@ -184,11 +184,15 @@ a {
   /* ── Home & Media: remove top gap ── */
   main,
   .page-main {
-    padding-top: 0 !important;
     padding-bottom: 110px !important;
     padding-left: 14px !important;
     padding-right: 14px !important;
   }
+
+    .page-main>*:first-child,
+    main>*:first-child {
+      margin-top: 0 !important;
+    }
 
   h1 {
     font-size: 28px !important;
