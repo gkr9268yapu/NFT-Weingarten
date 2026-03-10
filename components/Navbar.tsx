@@ -26,18 +26,27 @@ export default function Navbar() {
 
   // Close desktop dropdown on outside click
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (desktopRef.current && !desktopRef.current.contains(e.target as Node)) {
-        setDesktopOpen(false);
-      }
-      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) {
-        setMobileOpen(false);
+    const nav = document.querySelector('.mobile-nav-wrap') as HTMLElement;
+    if (!nav) return;
+
+    const handler = () => {
+      if (!window.visualViewport) return;
+      const keyboardHeight = window.innerHeight - window.visualViewport.height;
+      if (keyboardHeight > 100) {
+        nav.style.display = 'none';
+      } else {
+        nav.style.display = 'block';
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
+    window.visualViewport?.addEventListener('resize', handler);
+    window.visualViewport?.addEventListener('scroll', handler);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handler);
+      window.visualViewport?.removeEventListener('scroll', handler);
+    };
+  }, []);
   if (!currentUser) return null;
 
   const initials = currentUser.name
