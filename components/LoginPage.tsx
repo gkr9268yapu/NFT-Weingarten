@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUp, logIn } from "@/lib/firebaseAuth";
 import { useApp } from "@/lib/AppContext";
+import EyeIcon from "./icons/EyeIcon";
+import EyeClosedIcon from "./icons/EyeClosedIcon";
 
 const IS = {
   width: "100%",
@@ -16,8 +18,15 @@ const IS = {
   marginBottom: 14,
 } as const;
 
-function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const VALID_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com"];
+
+function validateEmail(email: string): string {
+  if (!email.includes("@")) return "";
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  if (!domain) return "";
+  if (!domain.includes(".")) return "";
+  if (!VALID_DOMAINS.includes(domain)) return "Invalid email domain. Did you mean @gmail.com?";
+  return "";
 }
 
 const PASS_RULES = [
@@ -37,6 +46,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [emailErr, setEmailErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#070d1a" }}>
@@ -49,8 +59,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!email || !password) { setError("Please fill in all fields."); return; }
-    if (!validateEmail(email)) { setError("Invalid email address."); return; }
-    setBusy(true); setError("");
+    if (validateEmail(email)) { setError(validateEmail(email)); return; }    setBusy(true); setError("");
     try {
       await logIn(email, password);
       router.push("/home");
@@ -61,8 +70,7 @@ export default function LoginPage() {
 
   const handleSignup = async () => {
     if (!name || !email || !password) { setError("All fields are required."); return; }
-    if (!validateEmail(email)) { setError("Invalid email address."); return; }
-    if (!passValid) { setError("Please fix password requirements."); return; }
+    if (validateEmail(email)) { setError(validateEmail(email)); return; }    if (!passValid) { setError("Please fix password requirements."); return; }
     setBusy(true); setError("");
     try {
       await signUp(name, email, password, "user");
@@ -115,7 +123,7 @@ export default function LoginPage() {
             value={email}
             onChange={e => {
               setEmail(e.target.value);
-              setEmailErr(e.target.value && !validateEmail(e.target.value) ? "Invalid email address" : "");
+              setEmailErr(validateEmail(e.target.value));
             }}
             placeholder="Email Address"
             style={{ ...IS, borderColor: emailErr ? "#ff5252" : "rgba(255,255,255,0.12)" }}
@@ -123,14 +131,24 @@ export default function LoginPage() {
           {emailErr && <p style={{ color: "#ff5252", fontSize: 12, marginTop: -10, marginBottom: 12 }}>{emailErr}</p>}
 
           {/* Password */}
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Password"
-            style={{ ...IS, marginBottom: 6, borderColor: mode === "signup" && password && !passValid ? "#ff5252" : "rgba(255,255,255,0.12)" }}
-            onKeyDown={e => e.key === "Enter" && (mode === "login" ? handleLogin() : handleSignup())}
-          />
+          <div style={{ position: "relative", marginBottom: 6 }}>
+            <input
+              type={showPass ? "text" : "password"}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Password"
+              style={{ ...IS, marginBottom: 0, borderColor: mode === "signup" && password && !passValid ? "#ff5252" : "rgba(255,255,255,0.12)", paddingRight: 44 }}
+              onKeyDown={e => e.key === "Enter" && (mode === "login" ? handleLogin() : handleSignup())}
+            />
+            <span
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPass(v => !v); }}
+              style={{
+                position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                color: "rgba(255,255,255,.4)", fontSize: 20, cursor: "pointer", userSelect: "none",
+              }}
+            >
+              {showPass ? <EyeClosedIcon /> : <EyeIcon />}            </span>
+          </div>
 
           {/* Password rules — signup only */}
           {mode === "signup" && password && (
