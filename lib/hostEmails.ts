@@ -1,6 +1,6 @@
 export const HOST_EMAILS = [
     "host1@gmail.com",
-    "gkrgobinda9268@gmail.com",
+    "graut0053@gmail.com",
     "kumarg446688@gmail.com",
 ];
 

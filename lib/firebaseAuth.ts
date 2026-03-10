@@ -10,6 +10,7 @@ import { isHostEmail } from "./hostEmails";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import type { Role, User } from "./types";
+import { browserLocalPersistence, setPersistence } from "firebase/auth";
 
 /* ── Sign up ──────────────────────────────────────────────── */
 export async function signUp(
@@ -34,23 +35,15 @@ export async function signUp(
 }
 /* ── Log in ───────────────────────────────────────────────── */
 export async function logIn(
-  email: string,
-  password: string,
-  expectedRole: Role
+  email: string, 
+  password: string
 ): Promise<User> {
+  await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const snap = await getDoc(doc(db, "users", cred.user.uid));
-
   if (!snap.exists()) throw new Error("User profile not found.");
-
   const profile = snap.data() as Omit<User, "password">;
-
-  if (profile.role !== expectedRole) {
-    await signOut(auth);
-    throw new Error(`Wrong role selected. You are registered as "${profile.role}".`);
-  }
-
-  return { ...profile, password: "" };   // never expose password client-side
+  return { ...profile, password: "" };
 }
 
 /* ── Log out ──────────────────────────────────────────────── */
