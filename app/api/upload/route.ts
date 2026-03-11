@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file") as File | null;
     const uploader = form.get("uploader") as string | null;
+    const chatOnly = form.get("chatOnly") as string | null; // "true" = don't save to media collection
 
     if (!file || !uploader) {
       return NextResponse.json({ error: "Missing file or uploader" }, { status: 400 });
@@ -17,14 +18,13 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const drive = await getDriveClient();
 
-    // Upload to Google Drive
     const driveRes = await drive.files.create({
       requestBody: {
         name: file.name,
         parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
       },
       media: {
-        mimeType: file.type || "image/jpeg",
+        mimeType: file.type || "application/octet-stream",
         body: Readable.from(buffer),
       },
       fields: "id, name",
@@ -33,30 +33,37 @@ export async function POST(req: NextRequest) {
     const fileId = driveRes.data.id!;
     const fileName = driveRes.data.name!;
 
-    // Make it publicly viewable so <img> tags work
     await drive.permissions.create({
       fileId,
       requestBody: { role: "reader", type: "anyone" },
     });
 
-    const imageUrl = `/api/image/${fileId}`;
+    const fileUrl = `/api/image/${fileId}`;
     const today = new Date().toLocaleDateString("en-GB");
 
-    // Save metadata to Firestore so all users see it in real-time
-    const docRef = await addDoc(collection(db, "media"), {
-      url: imageUrl,
-      driveFileId: fileId,
-      filename: fileName,
-      uploader,
-      date: today,
-      createdAt: serverTimestamp(),
-    });
+    // Only save to media collection if it's a media page upload
+    if (!chatOnly) {
+      await addDoc(collection(db, "media"), {
+        url: fileUrl,
+        driveFileId: fileId,
+        filename: fileName,
+        uploader,
+        date: today,
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    // File size
+    const bytes = file.size;
+    const fileSize = bytes < 1024 * 1024
+      ? `${(bytes / 1024).toFixed(1)} KB`
+      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 
     return NextResponse.json({
       success: true,
-      id: docRef.id,
-      url: imageUrl,
+      url: fileUrl,
       filename: fileName,
+      fileSize,
       uploader,
       date: today,
     });

@@ -1,24 +1,48 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import type { Message, User, ReplyTo } from "@/lib/types";
+import type { Message, User, ReplyTo, PollOption } from "@/lib/types";
+import PollModal from "./PollModal";
 
 const EMOJIS = ["❤️", "😂", "👍", "🔥", "😮", "😢"] as const;
+
+function getFileIcon(fileName: string) {
+    const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return "🖼️";
+    if (ext === "pdf") return "📕";
+    if (["doc", "docx"].includes(ext)) return "📝";
+    if (["xls", "xlsx"].includes(ext)) return "📊";
+    if (["ppt", "pptx"].includes(ext)) return "📑";
+    if (["zip", "rar", "7z"].includes(ext)) return "🗜️";
+    if (ext === "mp4" || ext === "mov") return "🎬";
+    if (ext === "mp3" || ext === "wav") return "🎵";
+    return "📄";
+}
 
 interface Props {
     messages: Message[];
     currentUser: User;
     onSendText: (text: string, replyTo?: ReplyTo) => Promise<void>;
     onSendImage: (file: File, replyTo?: ReplyTo) => Promise<void>;
+    onSendDocument: (file: File, replyTo?: ReplyTo) => Promise<void>;
+    onSendPoll: (question: string, options: string[], multiChoice: boolean) => Promise<void>;
     onReact: (msgId: string, emoji: string, current: Record<string, string[]>) => Promise<void>;
     onDeleteForMe: (msgId: string) => Promise<void>;
     onDeleteForEveryone: (msgId: string) => Promise<void>;
+    onVote: (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) => Promise<void>;
+    onClosePoll: (msgId: string) => Promise<void>;
+    onPin: (msgId: string) => Promise<void>;
+    onUnpin: (msgId: string) => Promise<void>;
 }
 
 export default function ChatRoom({
-    messages, currentUser, onSendText, onSendImage, onReact, onDeleteForMe, onDeleteForEveryone,
+    messages, currentUser,
+    onSendText, onSendImage, onSendDocument, onSendPoll,
+    onReact, onDeleteForMe, onDeleteForEveryone,
+    onVote, onClosePoll, onPin, onUnpin,
 }: Props) {
     const chatRef = useRef<HTMLDivElement>(null);
     const fileRef = useRef<HTMLInputElement>(null);
+    const docRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const [text, setText] = useState("");
@@ -30,9 +54,14 @@ export default function ChatRoom({
     const [preview, setPreview] = useState<string | null>(null);
     const [deleteModal, setDeleteModal] = useState<{ msgId: string; isOwn: boolean } | null>(null);
     const [bulkDelete, setBulkDelete] = useState(false);
+    const [showPlus, setShowPlus] = useState(false);
+    const [showPoll, setShowPoll] = useState(false);
 
     const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
     const swipedRef = useRef(false);
+    const msgRefs = useRef<Record<string, HTMLDivElement>>({});
+    const [pinnedIdx, setPinnedIdx] = useState(0);
 
     useEffect(() => {
         if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -45,6 +74,22 @@ export default function ChatRoom({
         return () => document.removeEventListener("click", handler);
     }, [ctx]);
 
+    useEffect(() => {
+        if (!showPlus) return;
+        const handler = () => setShowPlus(false);
+        setTimeout(() => document.addEventListener("click", handler), 0);
+        return () => document.removeEventListener("click", handler);
+    }, [showPlus]);
+
+    const scrollToMsg = (msgId: string) => {
+        const el = msgRefs.current[msgId];
+        if (el && chatRef.current) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.style.background = "rgba(0,230,118,.12)";
+            setTimeout(() => { el.style.background = "transparent"; }, 1500);
+        }
+    };
+
     const getMsg = (id: string) => messages.find(m => m.id === id);
 
     const handleSend = async () => {
@@ -54,17 +99,20 @@ export default function ChatRoom({
         finally { setSending(false); }
     };
 
-    const handleImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const uploadFile = async (file: File, type: "image" | "document", replyTo?: ReplyTo) => {
         setSending(true);
-        try { await onSendImage(file, replyTo ?? undefined); setReplyTo(null); }
-        finally { setSending(false); if (fileRef.current) fileRef.current.value = ""; }
+        try {
+            if (type === "image") await onSendImage(file, replyTo);
+            else await onSendDocument(file, replyTo);
+            setReplyTo(null);
+        } finally {
+            setSending(false);
+            if (fileRef.current) fileRef.current.value = "";
+            if (docRef.current) docRef.current.value = "";
+        }
     };
 
-    const openCtx = (msgId: string, x: number, y: number) => {
-        setCtx({ msgId, x, y });
-    };
+    const openCtx = (msgId: string, x: number, y: number) => setCtx({ msgId, x, y });
 
     const handleCtxAction = async (action: string) => {
         if (!ctx) return;
@@ -76,35 +124,37 @@ export default function ChatRoom({
             setTimeout(() => inputRef.current?.focus(), 50);
         } else if (action === "copy" && msg.type === "text") {
             await navigator.clipboard.writeText(msg.text).catch(() => { });
+        } else if (action === "download" && (msg.type === "document" || msg.type === "image")) {
+            const url = msg.fileUrl ?? msg.imageUrl ?? "";
+            const a = document.createElement("a"); a.href = url; a.download = msg.fileName ?? "file"; a.click();
         } else if (action === "select") {
-            setSelectMode(true);
-            setSelected(new Set([ctx.msgId]));
+            setSelectMode(true); setSelected(new Set([ctx.msgId]));
+        } else if (action === "pin") {
+            if (msg.pinned) await onUnpin(msg.id);
+            else await onPin(msg.id);
         } else if (action === "delete") {
             setDeleteModal({ msgId: msg.id, isOwn: msg.userId === currentUser.id });
         }
     };
 
-    const toggleSelect = (msgId: string) => {
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (next.has(msgId)) next.delete(msgId); else next.add(msgId);
-            return next;
-        });
-    };
-
+    const toggleSelect = (id: string) => setSelected(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+    });
     const cancelSelect = () => { setSelectMode(false); setSelected(new Set()); };
 
     const selectedMsgs = messages.filter(m => selected.has(m.id));
     const allOwn = selectedMsgs.every(m => m.userId === currentUser.id);
-    const hasImages = selectedMsgs.some(m => m.type === "image");
+    const hasFiles = selectedMsgs.some(m => m.type === "image" || m.type === "document");
 
     const handleBulkCopy = () => {
         navigator.clipboard.writeText(selectedMsgs.map(m => `${m.user}: ${m.text}`).join("\n")).catch(() => { });
         cancelSelect();
     };
     const handleBulkDownload = () => {
-        selectedMsgs.filter(m => m.type === "image" && m.imageUrl).forEach(m => {
-            const a = document.createElement("a"); a.href = m.imageUrl!; a.download = "image"; a.click();
+        selectedMsgs.filter(m => (m.type === "image" || m.type === "document") && (m.fileUrl || m.imageUrl)).forEach(m => {
+            const a = document.createElement("a"); a.href = m.fileUrl ?? m.imageUrl!; a.download = m.fileName ?? "file"; a.click();
         });
         cancelSelect();
     };
@@ -133,14 +183,15 @@ export default function ChatRoom({
         return new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
     }
 
-    // Context menu position — keep inside viewport
     function ctxPos(x: number, y: number) {
-        const w = 200, h = 320;
+        const w = 200, h = 340;
         return {
             left: Math.min(x, (typeof window !== "undefined" ? window.innerWidth : 400) - w - 8),
             top: Math.min(y, (typeof window !== "undefined" ? window.innerHeight : 700) - h - 8),
         };
     }
+
+    const totalVotes = (options: PollOption[]) => options.reduce((s, o) => s + o.votes.length, 0);
 
     return (
         <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -151,10 +202,36 @@ export default function ChatRoom({
                     <button onClick={cancelSelect} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer" }}>✕</button>
                     <span style={{ flex: 1, color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, fontWeight: 700 }}>{selected.size} selected</span>
                     <button onClick={handleBulkCopy} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Copy</button>
-                    {hasImages && <button onClick={handleBulkDownload} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Download</button>}
+                    {hasFiles && <button onClick={handleBulkDownload} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Download</button>}
                     <button onClick={() => setBulkDelete(true)} style={{ background: "none", border: "none", color: "#ff5252", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Delete</button>
                 </div>
             )}
+
+            {/* Pinned messages bar */}
+            {(() => {
+                const pinned = messages.filter(m => m.pinned && !m.deletedForEveryone);
+                if (pinned.length === 0) return null;
+                const idx = pinnedIdx % pinned.length;
+                const pm = pinned[idx];
+                return (
+                    <div onClick={() => { scrollToMsg(pm.id); setPinnedIdx(i => (i + 1) % pinned.length); }}
+                        style={{ flexShrink: 0, background: "rgba(0,230,118,.06)", borderBottom: "1px solid rgba(0,230,118,.12)", padding: "8px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>📌</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: "#00e676", fontSize: 11, fontWeight: 700, marginBottom: 1 }}>
+                                Pinned message {pinned.length > 1 ? `${idx + 1}/${pinned.length}` : ""}
+                            </div>
+                            <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                <span style={{ color: "rgba(255,255,255,.4)", marginRight: 4 }}>{pm.user}:</span>
+                                {pm.type === "image" ? "🖼️ Image" : pm.type === "document" ? `📄 ${pm.fileName}` : pm.type === "poll" ? `📊 ${pm.poll?.question}` : pm.text.slice(0, 80)}
+                            </div>
+                        </div>
+                        {pinned.length > 1 && (
+                            <span style={{ color: "rgba(255,255,255,.3)", fontSize: 18, flexShrink: 0 }}>›</span>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* Messages */}
             <div ref={chatRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "12px 10px" }}>
@@ -169,12 +246,13 @@ export default function ChatRoom({
                             const isMe = msg.userId === currentUser.id;
                             const isSelected = selected.has(msg.id);
                             const isDeleted = msg.deletedForEveryone;
+
                             return (
                                 <div key={msg.id}
-                                    style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default" }}
+                                    ref={el => { if (el) msgRefs.current[msg.id] = el; }}
+                                    style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default", transition: "background .4s" }}
                                     onTouchStart={e => {
-                                        touchStartX.current = e.touches[0].clientX;
-                                        swipedRef.current = false;
+                                        touchStartX.current = e.touches[0].clientX; swipedRef.current = false;
                                         const r = e.currentTarget.getBoundingClientRect();
                                         const timer = setTimeout(() => {
                                             if (selectMode) { toggleSelect(msg.id); return; }
@@ -211,41 +289,95 @@ export default function ChatRoom({
                                         </div>
                                     )}
 
-                                    <div style={{ maxWidth: "75%" }}>
+                                    <div style={{ maxWidth: msg.type === "poll" ? "88%" : "75%" }}>
                                         {!isMe && !isDeleted && (
                                             <div style={{ fontSize: 11, color: "#00e676", fontWeight: 700, marginBottom: 1, paddingLeft: 2 }}>{msg.user}</div>
                                         )}
+
+                                        {/* Reply preview */}
                                         {msg.replyTo && !isDeleted && (
                                             <div style={{ background: isMe ? "rgba(0,0,0,.25)" : "rgba(255,255,255,.05)", borderLeft: `3px solid ${isMe ? "rgba(255,255,255,.4)" : "#00e676"}`, borderRadius: "8px 8px 0 0", padding: "5px 10px", marginBottom: -6 }}>
                                                 <div style={{ fontSize: 10, color: isMe ? "rgba(255,255,255,.7)" : "#00e676", fontWeight: 700 }}>{msg.replyTo.user}</div>
-                                                <div style={{ fontSize: 12, color: "rgba(255,255,255,.45)", marginTop: 1 }}>{msg.replyTo.type === "image" ? "📷 Image" : msg.replyTo.text.slice(0, 50)}</div>
+                                                <div style={{ fontSize: 12, color: "rgba(255,255,255,.45)", marginTop: 1 }}>
+                                                    {msg.replyTo.type === "image" ? "🖼️ Image" : msg.replyTo.type === "document" ? "📄 Document" : msg.replyTo.type === "poll" ? "📊 Poll" : msg.replyTo.text.slice(0, 50)}
+                                                </div>
                                             </div>
                                         )}
-                                        <div style={{
-                                            background: isDeleted ? "rgba(255,255,255,.04)" : isMe ? "linear-gradient(135deg,#00c853,#00e676)" : "rgba(255,255,255,.08)",
-                                            color: isDeleted ? "rgba(255,255,255,.3)" : isMe ? "#070d1a" : "#fff",
-                                            padding: msg.type === "image" && !isDeleted ? "4px" : "9px 13px",
-                                            borderRadius: isMe ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
-                                            fontSize: 14, lineHeight: 1.5, wordBreak: "break-word", fontStyle: isDeleted ? "italic" : "normal",
-                                        }}>
-                                            {isDeleted ? "🚫 This message was deleted" :
-                                                msg.type === "image" && msg.imageUrl ? (
-                                                    <img src={msg.imageUrl} alt="img" onClick={e => { e.stopPropagation(); setPreview(msg.imageUrl!); }}
-                                                        style={{ maxWidth: 200, maxHeight: 200, borderRadius: 12, display: "block", cursor: "pointer" }} />
-                                                ) : msg.text
-                                            }
-                                        </div>
-                                        <div style={{ display: "flex", gap: 5, marginTop: 2, flexWrap: "wrap", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
-                                            <span style={{ fontSize: 10, color: "rgba(255,255,255,.28)" }}>{msg.time}</span>
-                                            {Object.entries(msg.reactions).map(([emoji, users]) =>
-                                                users.length > 0 && (
-                                                    <span key={emoji} onClick={() => onReact(msg.id, emoji, msg.reactions)}
-                                                        style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 20, padding: "1px 7px", fontSize: 12, cursor: "pointer" }}>
-                                                        {emoji} {users.length}
+
+                                        {/* Message bubble */}
+                                        {isDeleted ? (
+                                            <div style={{ background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.3)", padding: "9px 13px", borderRadius: isMe ? "16px 4px 16px 16px" : "4px 16px 16px 16px", fontSize: 14, fontStyle: "italic" }}>
+                                                🚫 This message was deleted
+                                            </div>
+                                        ) : msg.type === "image" && msg.imageUrl ? (
+                                            <div style={{ background: isMe ? "linear-gradient(135deg,#00c853,#00e676)" : "rgba(255,255,255,.08)", padding: 4, borderRadius: isMe ? "16px 4px 16px 16px" : "4px 16px 16px 16px" }}>
+                                                <img src={msg.imageUrl} alt="img" onClick={e => { e.stopPropagation(); setPreview(msg.imageUrl!); }}
+                                                    style={{ maxWidth: 200, maxHeight: 200, borderRadius: 12, display: "block", cursor: "pointer" }} />
+                                            </div>
+                                        ) : msg.type === "document" && msg.fileUrl ? (
+                                            <div style={{ background: isMe ? "linear-gradient(135deg,#00c853,#00e676)" : "rgba(255,255,255,.08)", padding: "10px 14px", borderRadius: isMe ? "16px 4px 16px 16px" : "4px 16px 16px 16px", display: "flex", alignItems: "center", gap: 10, minWidth: 180 }}>
+                                                <span style={{ fontSize: 28, flexShrink: 0 }}>{getFileIcon(msg.fileName ?? "")}</span>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ color: isMe ? "#070d1a" : "#fff", fontSize: 13, fontWeight: 600, wordBreak: "break-all", lineHeight: 1.3 }}>{msg.fileName}</div>
+                                                    {msg.fileSize && <div style={{ color: isMe ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.4)", fontSize: 11, marginTop: 2 }}>{msg.fileSize}</div>}
+                                                </div>
+                                            </div>
+                                        ) : msg.type === "poll" && msg.poll ? (
+                                            /* Poll bubble */
+                                            <div style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 16, padding: "14px 16px", minWidth: 260 }}>
+                                                <div style={{ color: "rgba(255,255,255,.4)", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>📊 POLL {msg.poll.closed ? "· CLOSED" : ""}</div>
+                                                <div style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 12, lineHeight: 1.4 }}>{msg.poll.question}</div>
+                                                {msg.poll.options.map(opt => {
+                                                    const total = totalVotes(msg.poll!.options);
+                                                    const pct = total > 0 ? Math.round((opt.votes.length / total) * 100) : 0;
+                                                    const hasVoted = opt.votes.includes(currentUser.id);
+                                                    return (
+                                                        <div key={opt.id} onClick={() => { if (!msg.poll!.closed) onVote(msg.id, opt.id, msg.poll!.multiChoice, msg.poll!.options); }}
+                                                            style={{ marginBottom: 8, cursor: msg.poll!.closed ? "default" : "pointer" }}>
+                                                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                                                <span style={{ color: hasVoted ? "#00e676" : "#fff", fontSize: 13, fontWeight: hasVoted ? 700 : 400 }}>
+                                                                    {hasVoted ? "✓ " : ""}{opt.text}
+                                                                </span>
+                                                                <span style={{ color: "rgba(255,255,255,.4)", fontSize: 12 }}>{pct}%</span>
+                                                            </div>
+                                                            <div style={{ height: 4, background: "rgba(255,255,255,.08)", borderRadius: 4, overflow: "hidden" }}>
+                                                                <div style={{ height: "100%", width: `${pct}%`, background: hasVoted ? "#00e676" : "rgba(255,255,255,.2)", borderRadius: 4, transition: "width .3s" }} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+                                                    <span style={{ color: "rgba(255,255,255,.3)", fontSize: 11 }}>
+                                                        {msg.poll.multiChoice ? "Multiple choice" : "Single choice"} · {totalVotes(msg.poll.options)} vote{totalVotes(msg.poll.options) !== 1 ? "s" : ""}
                                                     </span>
-                                                )
-                                            )}
-                                        </div>
+                                                    {msg.userId === currentUser.id && !msg.poll.closed && (
+                                                        <button onClick={e => { e.stopPropagation(); onClosePoll(msg.id); }}
+                                                            style={{ background: "rgba(255,82,82,.1)", border: "1px solid rgba(255,82,82,.2)", color: "#ff5252", borderRadius: 6, padding: "4px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                                                            Close poll
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div style={{ background: isMe ? "linear-gradient(135deg,#00c853,#00e676)" : "rgba(255,255,255,.08)", color: isMe ? "#070d1a" : "#fff", padding: "9px 13px", borderRadius: isMe ? "16px 4px 16px 16px" : "4px 16px 16px 16px", fontSize: 14, lineHeight: 1.5, wordBreak: "break-word" }}>
+                                                {msg.text}
+                                            </div>
+                                        )}
+
+                                        {/* Time + reactions */}
+                                        {!isDeleted && (
+                                            <div style={{ display: "flex", gap: 5, marginTop: 2, flexWrap: "wrap", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "center" }}>
+                                                <span style={{ fontSize: 10, color: "rgba(255,255,255,.28)" }}>{msg.time}</span>
+                                                {Object.entries(msg.reactions).map(([emoji, users]) =>
+                                                    users.length > 0 && (
+                                                        <span key={emoji} onClick={() => onReact(msg.id, emoji, msg.reactions)}
+                                                            style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 20, padding: "1px 7px", fontSize: 12, cursor: "pointer" }}>
+                                                            {emoji} {users.length}
+                                                        </span>
+                                                    )
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Desktop hover reply */}
@@ -272,21 +404,63 @@ export default function ChatRoom({
                 <div style={{ flexShrink: 0, background: "rgba(14,24,40,.98)", borderTop: "1px solid rgba(255,255,255,.07)", padding: "8px 14px", display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ flex: 1, borderLeft: "3px solid #00e676", paddingLeft: 10 }}>
                         <div style={{ fontSize: 11, color: "#00e676", fontWeight: 700 }}>{replyTo.user}</div>
-                        <div style={{ fontSize: 12, color: "rgba(255,255,255,.45)" }}>{replyTo.type === "image" ? "📷 Image" : replyTo.text.slice(0, 60)}</div>
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,.45)" }}>
+                            {replyTo.type === "image" ? "🖼️ Image" : replyTo.type === "document" ? "📄 Document" : replyTo.type === "poll" ? "📊 Poll" : replyTo.text.slice(0, 60)}
+                        </div>
                     </div>
                     <button onClick={() => setReplyTo(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,.4)", fontSize: 18, cursor: "pointer" }}>✕</button>
                 </div>
             )}
 
+            {/* + menu popup */}
+            {showPlus && (
+                <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 70, left: 12, background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 16, overflow: "hidden", boxShadow: "0 -8px 30px rgba(0,0,0,.6)", zIndex: 400, minWidth: 180 }}>
+                    {[
+                        { icon: "🖼️", label: "Image", action: "image" },
+                        { icon: "📄", label: "Document", action: "doc" },
+                        { icon: "📊", label: "Poll", action: "poll" },
+                    ].map(item => (
+                        <button key={item.action}
+                            onClick={() => {
+                                setShowPlus(false);
+                                if (item.action === "image") fileRef.current?.click();
+                                if (item.action === "doc") docRef.current?.click();
+                                if (item.action === "poll") setShowPoll(true);
+                            }}
+                            style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 18px", background: "none", border: "none", color: "#fff", fontSize: 14, cursor: "pointer", textAlign: "left" }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+                            <span style={{ fontSize: 22 }}>{item.icon}</span>
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {/* Input bar */}
-            <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,.07)", padding: "10px 12px", display: "flex", gap: 8, alignItems: "center", background: "rgba(7,13,26,.98)" }}>
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleImagePick} style={{ display: "none" }} />
-                <button onClick={() => fileRef.current?.click()} title="Send image"
-                    style={{ background: "none", border: "none", color: "rgba(255,255,255,.45)", fontSize: 20, cursor: "pointer", padding: 4, flexShrink: 0 }}>📷</button>
-                <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
-                    placeholder="Type a message…"
-                    style={{ flex: 1, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 24, padding: "10px 16px", color: "#fff", fontSize: 14, fontFamily: "'Barlow',sans-serif", outline: "none" }} />
+            <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,.07)", padding: "10px 12px", display: "flex", gap: 8, alignItems: "center", background: "rgba(7,13,26,.98)", position: "relative" }}>
+                <input ref={fileRef} type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f, "image", replyTo ?? undefined); }} style={{ display: "none" }} />
+                <input ref={docRef} type="file" accept="*/*" onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f, "document", replyTo ?? undefined); }} style={{ display: "none" }} />
+
+                {/* + button */}
+                <button onClick={e => { e.stopPropagation(); setShowPlus(!showPlus); }}
+                    style={{ background: "none", border: "none", color: showPlus ? "#00e676" : "rgba(255,255,255,.45)", fontSize: 24, cursor: "pointer", padding: 4, flexShrink: 0, fontWeight: 300, lineHeight: 1, transition: "color .15s" }}>
+                    {showPlus ? "✕" : "+"}
+                </button>
+
+                {/* Text input with camera inside */}
+                <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+                    <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
+                        placeholder="Type a message…"
+                        style={{ width: "100%", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 24, padding: "10px 44px 10px 16px", color: "#fff", fontSize: 14, fontFamily: "'Barlow',sans-serif", outline: "none" }} />
+                    {/* Camera icon inside input */}
+                    <button onClick={() => fileRef.current?.click()}
+                        style={{ position: "absolute", right: 10, background: "none", border: "none", color: "rgba(255,255,255,.35)", fontSize: 18, cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}>
+                        📷
+                    </button>
+                </div>
+
                 <button onClick={handleSend} disabled={sending || !text.trim()}
                     style={{ background: !text.trim() || sending ? "rgba(0,230,118,.25)" : "linear-gradient(135deg,#00e676,#00c853)", color: "#070d1a", border: "none", padding: "10px 18px", borderRadius: 24, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 15, cursor: "pointer", flexShrink: 0, opacity: !text.trim() || sending ? 0.5 : 1 }}>
                     Send
@@ -299,10 +473,11 @@ export default function ChatRoom({
                 if (!msg) return null;
                 const isOwn = msg.userId === currentUser.id;
                 const isDeleted = msg.deletedForEveryone;
+                const isFile = msg.type === "image" || msg.type === "document";
                 const pos = ctxPos(ctx.x, ctx.y);
                 return (
                     <div onClick={e => e.stopPropagation()} style={{ position: "fixed", left: pos.left, top: pos.top, background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 16, zIndex: 600, minWidth: 190, overflow: "hidden", boxShadow: "0 12px 40px rgba(0,0,0,.7)" }}>
-                        {!isDeleted && (
+                        {!isDeleted && msg.type !== "poll" && (
                             <div style={{ display: "flex", gap: 6, padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
                                 {EMOJIS.map(e => (
                                     <span key={e} onClick={() => { onReact(msg.id, e, msg.reactions); setCtx(null); }}
@@ -317,6 +492,8 @@ export default function ChatRoom({
                         {([
                             !isDeleted && { label: "↩️  Reply", action: "reply", red: false },
                             !isDeleted && msg.type === "text" && { label: "📋  Copy", action: "copy", red: false },
+                            !isDeleted && isFile && { label: "⬇️  Download", action: "download", red: false },
+                            !isDeleted && { label: msg.pinned ? "📌  Unpin" : "📌  Pin", action: "pin", red: false },
                             { label: "☑️  Select", action: "select", red: false },
                             (isOwn || currentUser.role === "host") && !isDeleted && { label: "🗑️  Delete", action: "delete", red: true },
                         ].filter(Boolean) as { label: string; action: string; red: boolean }[]).map(item => (
@@ -396,6 +573,11 @@ export default function ChatRoom({
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Poll modal */}
+            {showPoll && (
+                <PollModal onClose={() => setShowPoll(false)} onSubmit={onSendPoll} />
             )}
 
             <style>{`

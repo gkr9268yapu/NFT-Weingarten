@@ -1,12 +1,11 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  onSnapshot, query, orderBy, where, serverTimestamp,
+  onSnapshot, query, orderBy, serverTimestamp,
   getDoc, setDoc, getDocs,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Match, Message, User, Conversation, ReplyTo } from "./types";
-
 
 /* ══ USERS ══════════════════════════════════════════════════ */
 export function listenUsers(cb: (users: User[]) => void): Unsubscribe {
@@ -16,10 +15,6 @@ export function listenUsers(cb: (users: User[]) => void): Unsubscribe {
 }
 export async function deleteUserDoc(uid: string): Promise<void> {
   await deleteDoc(doc(db, "users", uid));
-}
-
-export async function deleteConversation(convId: string): Promise<void> {
-  await deleteDoc(doc(db, "conversations", convId));
 }
 
 /* ══ MATCHES ════════════════════════════════════════════════ */
@@ -62,12 +57,17 @@ function toMessage(d: { id: string; data: () => Record<string, unknown> }): Mess
     text: (data.text as string) ?? "",
     time: (data.time as string) ?? "",
     dateStr: (data.dateStr as string) ?? "",
-    type: (data.type as "text" | "image") ?? "text",
+    type: (data.type as "text" | "image" | "document" | "poll") ?? "text",
     imageUrl: (data.imageUrl as string | undefined),
+    fileUrl: (data.fileUrl as string | undefined),
+    fileName: (data.fileName as string | undefined),
+    fileSize: (data.fileSize as string | undefined),
+    poll: (data.poll as import("./types").Poll | undefined),
     reactions: (data.reactions as Record<string, string[]>) ?? {},
-    replyTo: (data.replyTo as ReplyTo | undefined),
+    replyTo: (data.replyTo as import("./types").ReplyTo | undefined),
     deletedFor: (data.deletedFor as string[]) ?? [],
     deletedForEveryone: (data.deletedForEveryone as boolean) ?? false,
+    pinned: (data.pinned as boolean | undefined) ?? false,
   };
 }
 
@@ -166,15 +166,13 @@ export async function getOrCreateConversation(
 }
 
 export function listenConversations(userId: string, cb: (convs: Conversation[]) => void): Unsubscribe {
-  return onSnapshot(
-    query(collection(db, "conversations"), where("participants", "array-contains", userId)),
-    snap => {
-      const convs = snap.docs
-        .map(d => ({ id: d.id, ...(d.data() as Omit<Conversation, "id">) }))
-        .sort((a, b) => b.lastTimestamp - a.lastTimestamp);
-      cb(convs);
-    }
-  );
+  return onSnapshot(collection(db, "conversations"), snap => {
+    const convs = snap.docs
+      .filter(d => (d.data().participants as string[]).includes(userId))
+      .map(d => ({ id: d.id, ...(d.data() as Omit<Conversation, "id">) }))
+      .sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+    cb(convs);
+  });
 }
 
 export function listenPrivateMessages(convId: string, cb: (msgs: Message[]) => void): Unsubscribe {
@@ -262,4 +260,151 @@ export async function seedInitialData(): Promise<void> {
     expiryDate: "2026-12-31", available: [], notAvailable: [], createdAt: serverTimestamp(),
   });
   console.log("Seeded successfully!");
+}
+
+/* ══ DOCUMENT MESSAGES ══════════════════════════════════════ */
+export async function sendDocumentMessage(
+  userId: string, user: string,
+  fileUrl: string, fileName: string, fileSize: string,
+  replyTo?: ReplyTo,
+  collPath = "messages"
+): Promise<void> {
+  const { time, dateStr } = nowStrings();
+  await addDoc(collection(db, collPath), {
+    userId, user,
+    text: `📄 ${fileName}`,
+    fileUrl, fileName, fileSize,
+    time, dateStr,
+    type: "document",
+    reactions: {}, replyTo: replyTo ?? null,
+    deletedFor: [], deletedForEveryone: false,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function sendPrivateDocumentMessage(
+  convId: string, userId: string, user: string,
+  fileUrl: string, fileName: string, fileSize: string,
+  otherId: string, replyTo?: ReplyTo
+): Promise<void> {
+  const { time, dateStr } = nowStrings();
+  const msgRef = collection(db, "conversations", convId, "messages");
+  await addDoc(msgRef, {
+    userId, user,
+    text: `📄 ${fileName}`,
+    fileUrl, fileName, fileSize,
+    time, dateStr,
+    type: "document",
+    reactions: {}, replyTo: replyTo ?? null,
+    deletedFor: [], deletedForEveryone: false,
+    createdAt: serverTimestamp(),
+  });
+  const snap = await getDoc(doc(db, "conversations", convId));
+  const unread = (snap.data()?.unread as Record<string, number>) ?? {};
+  await updateDoc(doc(db, "conversations", convId), {
+    lastMessage: `📄 ${fileName}`, lastTime: time,
+    lastTimestamp: Date.now(),
+    unread: { ...unread, [otherId]: (unread[otherId] ?? 0) + 1 },
+  });
+}
+
+/* ══ POLL MESSAGES ══════════════════════════════════════════ */
+export async function sendPollMessage(
+  userId: string, user: string,
+  question: string, options: string[],
+  multiChoice: boolean,
+  collPath = "messages"
+): Promise<void> {
+  const { time, dateStr } = nowStrings();
+  const pollOptions = options.map((text, i) => ({ id: String(i), text, votes: [] }));
+  await addDoc(collection(db, collPath), {
+    userId, user,
+    text: `📊 ${question}`,
+    time, dateStr,
+    type: "poll",
+    poll: { question, options: pollOptions, multiChoice, closed: false, createdBy: userId },
+    reactions: {},
+    deletedFor: [], deletedForEveryone: false,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function sendPrivatePollMessage(
+  convId: string, userId: string, user: string,
+  question: string, options: string[],
+  multiChoice: boolean, otherId: string
+): Promise<void> {
+  const { time, dateStr } = nowStrings();
+  const pollOptions = options.map((text, i) => ({ id: String(i), text, votes: [] }));
+  const msgRef = collection(db, "conversations", convId, "messages");
+  await addDoc(msgRef, {
+    userId, user,
+    text: `📊 ${question}`,
+    time, dateStr,
+    type: "poll",
+    poll: { question, options: pollOptions, multiChoice, closed: false, createdBy: userId },
+    reactions: {},
+    deletedFor: [], deletedForEveryone: false,
+    createdAt: serverTimestamp(),
+  });
+  const snap = await getDoc(doc(db, "conversations", convId));
+  const unread = (snap.data()?.unread as Record<string, number>) ?? {};
+  await updateDoc(doc(db, "conversations", convId), {
+    lastMessage: `📊 ${question}`, lastTime: time,
+    lastTimestamp: Date.now(),
+    unread: { ...unread, [otherId]: (unread[otherId] ?? 0) + 1 },
+  });
+}
+
+export async function voteOnPoll(
+  msgId: string, optionId: string,
+  userId: string, multiChoice: boolean,
+  currentOptions: import("./types").PollOption[],
+  collPath = "messages"
+): Promise<void> {
+  let updated = currentOptions.map(opt => {
+    let votes = [...opt.votes];
+    if (!multiChoice) {
+      // single choice — remove from all first
+      votes = votes.filter(v => v !== userId);
+    }
+    if (opt.id === optionId) {
+      if (votes.includes(userId)) {
+        votes = votes.filter(v => v !== userId); // unvote
+      } else {
+        votes.push(userId);
+      }
+    }
+    return { ...opt, votes };
+  });
+  await updateDoc(doc(db, collPath, msgId), { "poll.options": updated });
+}
+
+export async function voteOnPrivatePoll(
+  convId: string, msgId: string, optionId: string,
+  userId: string, multiChoice: boolean,
+  currentOptions: import("./types").PollOption[]
+): Promise<void> {
+  await voteOnPoll(msgId, optionId, userId, multiChoice, currentOptions, `conversations/${convId}/messages`);
+}
+
+export async function closePoll(msgId: string, collPath = "messages"): Promise<void> {
+  await updateDoc(doc(db, collPath, msgId), { "poll.closed": true });
+}
+
+export async function closePrivatePoll(convId: string, msgId: string): Promise<void> {
+  await closePoll(msgId, `conversations/${convId}/messages`);
+}
+
+/* ══ PIN / UNPIN ════════════════════════════════════════════ */
+export async function pinMessage(msgId: string, collPath = "messages"): Promise<void> {
+  await updateDoc(doc(db, collPath, msgId), { pinned: true });
+}
+
+export async function unpinMessage(msgId: string, collPath = "messages"): Promise<void> {
+  await updateDoc(doc(db, collPath, msgId), { pinned: false });
+}
+
+export async function deleteConversation(convId: string): Promise<void> {
+  await deleteDoc(doc(db, "conversations", convId));
 }

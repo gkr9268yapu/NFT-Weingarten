@@ -3,11 +3,12 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import {
-    sendMessage, sendImageMessage,
-    deleteMessageForMe, deleteMessageForEveryone, toggleReaction,
+    sendMessage, sendImageMessage, sendDocumentMessage, sendPollMessage,
+    deleteMessageForMe, deleteMessageForEveryone,
+    toggleReaction, voteOnPoll, closePoll, pinMessage, unpinMessage,
 } from "@/lib/firebaseDB";
 import ChatRoom from "@/components/ChatRoom";
-import type { ReplyTo } from "@/lib/types";
+import type { ReplyTo, PollOption } from "@/lib/types";
 
 export default function TeamChatPage() {
     const { currentUser, messages, loading } = useApp();
@@ -18,7 +19,6 @@ export default function TeamChatPage() {
         if (!loading && !currentUser) router.push("/");
     }, [loading, currentUser, router]);
 
-    // Keyboard resize
     useEffect(() => {
         const wrap = wrapRef.current;
         if (!wrap || !window.visualViewport) return;
@@ -41,30 +41,38 @@ export default function TeamChatPage() {
     );
     if (!currentUser) return null;
 
+    const upload = async (file: File) => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("uploader", currentUser.name);
+        form.append("chatOnly", "true");
+        const res = await fetch("/api/upload", { method: "POST", body: form });
+        const data = await res.json();
+        return data;
+    };
+
     const handleSendText = async (text: string, replyTo?: ReplyTo) =>
         sendMessage(currentUser.id, currentUser.name, text, replyTo);
 
     const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
-        const form = new FormData();
-        form.append("file", file);
-        form.append("uploader", currentUser.name);
-        const res = await fetch("/api/upload", { method: "POST", body: form });
-        const data = await res.json();
-        console.log("upload response:", data);
-        console.log("calling sendImageMessage with:", currentUser.id, currentUser.name, data.url);
-        if (data.url) {
-            try {
-                await sendImageMessage(currentUser.id, currentUser.name, data.url, replyTo);
-                console.log("sendImageMessage success");
-            } catch (err) {
-                console.error("sendImageMessage error:", err);
-            }
-        }
+        const data = await upload(file);
+        if (data.url) await sendImageMessage(currentUser.id, currentUser.name, data.url, replyTo);
     };
+
+    const handleSendDocument = async (file: File, replyTo?: ReplyTo) => {
+        const data = await upload(file);
+        if (data.url) await sendDocumentMessage(currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", replyTo);
+    };
+
+    const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) =>
+        sendPollMessage(currentUser.id, currentUser.name, question, options, multiChoice);
+
+    const handleVote = async (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) =>
+        voteOnPoll(msgId, optionId, currentUser.id, multiChoice, currentOptions);
+
     return (
         <div ref={wrapRef} style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
-            {/* Header */}
-            <div style={{ flexShrink: 0, height: 56, background: "rgba(7,13,26,.97)", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12, zIndex: 10 }}>
+            <div style={{ flexShrink: 0, height: 56, background: "rgba(7,13,26,.97)", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12 }}>
                 <button onClick={() => router.push("/chat")} style={{ background: "none", border: "none", color: "rgba(255,255,255,.6)", fontSize: 22, cursor: "pointer", padding: "4px 8px 4px 0" }}>←</button>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#00e676,#00c853)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>⚽</div>
                 <div>
@@ -72,16 +80,20 @@ export default function TeamChatPage() {
                     <div style={{ color: "rgba(255,255,255,.35)", fontSize: 11 }}>Team group chat</div>
                 </div>
             </div>
-
-            {/* Chat fills remaining height */}
             <ChatRoom
                 messages={messages}
                 currentUser={currentUser}
                 onSendText={handleSendText}
                 onSendImage={handleSendImage}
+                onSendDocument={handleSendDocument}
+                onSendPoll={handleSendPoll}
                 onReact={(msgId, emoji, current) => toggleReaction(msgId, emoji, currentUser.name, current)}
                 onDeleteForMe={msgId => deleteMessageForMe(msgId, currentUser.id)}
                 onDeleteForEveryone={msgId => deleteMessageForEveryone(msgId)}
+                onVote={handleVote}
+                onClosePoll={msgId => closePoll(msgId)}
+                onPin={msgId => pinMessage(msgId)}
+                onUnpin={msgId => unpinMessage(msgId)}
             />
         </div>
     );

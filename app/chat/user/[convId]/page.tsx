@@ -4,11 +4,13 @@ import { useRouter, useParams } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import {
     listenPrivateMessages, sendPrivateMessage, sendPrivateImageMessage,
+    sendPrivateDocumentMessage, sendPrivatePollMessage,
     deletePrivateMessageForMe, deletePrivateMessageForEveryone,
     togglePrivateReaction, markConversationRead, listenConversations,
+    voteOnPrivatePoll, closePrivatePoll, pinMessage, unpinMessage,
 } from "@/lib/firebaseDB";
 import ChatRoom from "@/components/ChatRoom";
-import type { Message, Conversation, ReplyTo } from "@/lib/types";
+import type { Message, Conversation, ReplyTo, PollOption } from "@/lib/types";
 
 export default function PrivateChatPage() {
     const { currentUser, loading } = useApp();
@@ -40,7 +42,6 @@ export default function PrivateChatPage() {
         return () => unsub();
     }, [currentUser, convId]);
 
-    // Keyboard resize
     useEffect(() => {
         const wrap = wrapRef.current;
         if (!wrap || !window.visualViewport) return;
@@ -66,32 +67,39 @@ export default function PrivateChatPage() {
     const otherId = conv?.participants.find(p => p !== currentUser.id) ?? "";
     const otherName = conv?.participantNames[otherId] ?? "…";
 
-    const handleSendText = async (text: string, replyTo?: ReplyTo) =>
-        sendPrivateMessage(convId, currentUser.id, currentUser.name, text, otherId, replyTo);
-
-    const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
+    const upload = async (file: File) => {
         const form = new FormData();
         form.append("file", file);
         form.append("uploader", currentUser.name);
+        form.append("chatOnly", "true");
         const res = await fetch("/api/upload", { method: "POST", body: form });
-        const data = await res.json();
-        console.log("private upload response:", data);
-        if (data.url) {
-            try {
-                const currentOtherId = conv?.participants.find(p => p !== currentUser.id) ?? "";
-                console.log("otherId:", currentOtherId);
-                await sendPrivateImageMessage(convId, currentUser.id, currentUser.name, data.url, currentOtherId, replyTo);
-                console.log("private sendImageMessage success");
-            } catch (err) {
-                console.error("private sendImageMessage error:", err);
-            }
-        }
+        return await res.json();
     };
+
+    const currentOtherId = () => conv?.participants.find(p => p !== currentUser.id) ?? "";
+
+    const handleSendText = async (text: string, replyTo?: ReplyTo) =>
+        sendPrivateMessage(convId, currentUser.id, currentUser.name, text, currentOtherId(), replyTo);
+
+    const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
+        const data = await upload(file);
+        if (data.url) await sendPrivateImageMessage(convId, currentUser.id, currentUser.name, data.url, currentOtherId(), replyTo);
+    };
+
+    const handleSendDocument = async (file: File, replyTo?: ReplyTo) => {
+        const data = await upload(file);
+        if (data.url) await sendPrivateDocumentMessage(convId, currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", currentOtherId(), replyTo);
+    };
+
+    const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) =>
+        sendPrivatePollMessage(convId, currentUser.id, currentUser.name, question, options, multiChoice, currentOtherId());
+
+    const handleVote = async (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) =>
+        voteOnPrivatePoll(convId, msgId, optionId, currentUser.id, multiChoice, currentOptions);
 
     return (
         <div ref={wrapRef} style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
-            {/* Header */}
-            <div style={{ flexShrink: 0, height: 56, background: "rgba(7,13,26,.97)", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12, zIndex: 10 }}>
+            <div style={{ flexShrink: 0, height: 56, background: "rgba(7,13,26,.97)", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12 }}>
                 <button onClick={() => router.push("/chat")} style={{ background: "none", border: "none", color: "rgba(255,255,255,.6)", fontSize: 22, cursor: "pointer", padding: "4px 8px 4px 0" }}>←</button>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: "#fff", flexShrink: 0 }}>
                     {otherName[0]}
@@ -101,15 +109,20 @@ export default function PrivateChatPage() {
                     <div style={{ color: "rgba(255,255,255,.35)", fontSize: 11 }}>Private chat</div>
                 </div>
             </div>
-
             <ChatRoom
                 messages={messages}
                 currentUser={currentUser}
                 onSendText={handleSendText}
                 onSendImage={handleSendImage}
+                onSendDocument={handleSendDocument}
+                onSendPoll={handleSendPoll}
                 onReact={(msgId, emoji, current) => togglePrivateReaction(convId, msgId, emoji, currentUser.name, current)}
                 onDeleteForMe={msgId => deletePrivateMessageForMe(convId, msgId, currentUser.id)}
                 onDeleteForEveryone={msgId => deletePrivateMessageForEveryone(convId, msgId)}
+                onVote={handleVote}
+                onClosePoll={msgId => closePrivatePoll(convId, msgId)}
+                onPin={msgId => pinMessage(msgId, `conversations/${convId}/messages`)}
+                onUnpin={msgId => unpinMessage(msgId, `conversations/${convId}/messages`)}
             />
         </div>
     );

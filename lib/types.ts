@@ -31,7 +31,21 @@ export interface ReplyTo {
   id: string;
   user: string;
   text: string;
-  type: "text" | "image";
+  type: "text" | "image" | "document" | "poll";
+}
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: string[]; // userIds
+}
+
+export interface Poll {
+  question: string;
+  options: PollOption[];
+  multiChoice: boolean;
+  closed: boolean;
+  createdBy: string;
 }
 
 export interface Message {
@@ -41,12 +55,17 @@ export interface Message {
   text: string;
   time: string;
   dateStr: string;
-  type: "text" | "image";
+  type: "text" | "image" | "document" | "poll";
   imageUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: string;
+  poll?: Poll;
   reactions: Reactions;
   replyTo?: ReplyTo;
   deletedFor: string[];
   deletedForEveryone: boolean;
+  pinned?: boolean;
 }
 
 export interface Conversation {
