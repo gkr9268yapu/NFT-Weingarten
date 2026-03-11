@@ -184,13 +184,18 @@ export default function ChatRoom({
     }
 
     function ctxPos(x: number, y: number) {
-        const w = 200, h = 340;
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+            return {
+                left: Math.max(8, (window.innerWidth - 200) / 2),
+                top: Math.max(60, (window.innerHeight - 340) / 2),
+            };
+        }
         return {
-            left: Math.min(x, (typeof window !== "undefined" ? window.innerWidth : 400) - w - 8),
-            top: Math.min(y, (typeof window !== "undefined" ? window.innerHeight : 700) - h - 8),
+            left: Math.min(x, window.innerWidth - 208),
+            top: Math.min(y, window.innerHeight - 348),
         };
     }
-
     const totalVotes = (options: PollOption[]) => options.reduce((s, o) => s + o.votes.length, 0);
 
     return (
@@ -252,25 +257,38 @@ export default function ChatRoom({
                                     ref={el => { if (el) msgRefs.current[msg.id] = el; }}
                                     style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default", transition: "background .4s" }}
                                     onTouchStart={e => {
-                                        touchStartX.current = e.touches[0].clientX; swipedRef.current = false;
-                                        const r = e.currentTarget.getBoundingClientRect();
+                                        touchStartX.current = e.touches[0].clientX;
+                                        touchStartY.current = e.touches[0].clientY;
+                                        swipedRef.current = false;
                                         const timer = setTimeout(() => {
                                             if (selectMode) { toggleSelect(msg.id); return; }
-                                            openCtx(msg.id, r.left + r.width / 2, r.top);
-                                        }, 500);
+                                            // vibrate on long press if supported
+                                            if (navigator.vibrate) navigator.vibrate(50);
+                                            openCtx(msg.id, window.innerWidth / 2, window.innerHeight / 2);
+                                        }, 600);
                                         (e.currentTarget as HTMLElement).dataset.timer = String(timer);
                                     }}
                                     onTouchMove={e => {
-                                        clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
-                                        if (swipedRef.current) return;
-                                        const dx = e.touches[0].clientX - touchStartX.current;
-                                        if (dx > 55 && !isDeleted) {
-                                            swipedRef.current = true;
-                                            setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type });
-                                            setTimeout(() => inputRef.current?.focus(), 50);
+                                        const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
+                                        const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
+                                        // only cancel if moved more than 12px
+                                        if (dx > 12 || dy > 12) {
+                                            clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                                        }
+                                        // swipe right to reply
+                                        if (!swipedRef.current) {
+                                            const swipeX = e.touches[0].clientX - touchStartX.current;
+                                            if (swipeX > 55 && !isDeleted) {
+                                                swipedRef.current = true;
+                                                clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                                                setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type });
+                                                setTimeout(() => inputRef.current?.focus(), 50);
+                                            }
                                         }
                                     }}
-                                    onTouchEnd={e => clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer))}
+                                    onTouchEnd={e => {
+                                        clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                                    }}
                                     onContextMenu={e => { e.preventDefault(); if (selectMode) { toggleSelect(msg.id); return; } openCtx(msg.id, e.clientX, e.clientY); }}
                                     onDoubleClick={() => { if (!isDeleted && !selectMode) { setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type }); setTimeout(() => inputRef.current?.focus(), 50); } }}
                                     onClick={() => { if (selectMode) toggleSelect(msg.id); }}
