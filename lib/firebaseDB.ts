@@ -406,5 +406,11 @@ export async function unpinMessage(msgId: string, collPath = "messages"): Promis
 }
 
 export async function deleteConversation(convId: string): Promise<void> {
+  // First delete all messages inside the conversation
+  const msgsSnap = await getDocs(collection(db, "conversations", convId, "messages"));
+  for (const msgDoc of msgsSnap.docs) {
+    await deleteDoc(doc(db, "conversations", convId, "messages", msgDoc.id));
+  }
+  // Then delete the conversation itself
   await deleteDoc(doc(db, "conversations", convId));
 }
