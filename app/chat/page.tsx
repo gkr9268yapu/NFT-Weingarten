@@ -41,7 +41,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="chat-page-wrap" style={{ height: "calc(100dvh - 106px)", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
+    <div className="chat-page-wrap" style={{ height: "calc(100dvh - 56px)", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
       <Navbar />
 
       {/* fills space between navbar and bottom */}
