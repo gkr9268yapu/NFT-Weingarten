@@ -172,6 +172,7 @@ a {
   /* Home & Media pages */
   main,
   .page-main {
+    padding-top: 64px !important;
     padding-bottom: 24px !important;
     padding-left: 14px !important;
     padding-right: 14px !important;

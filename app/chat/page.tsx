@@ -69,7 +69,7 @@ export default function ChatPage() {
     <div ref={wrapRef} style={{
       position: "fixed",
       top: 0, left: 0, right: 0,
-      height: "100dvh",
+      height: "98dvh",
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
@@ -87,7 +87,7 @@ export default function ChatPage() {
           display: "flex", flexDirection: "column",
         }}>
           <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 50, fontWeight: 900, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase", flexShrink: 0 }}>
-            Team <span style={{ color: "#00e676" }}>Chat</span>
+            NFT Team <span style={{ color: "#00e676" }}>Chat</span>
           </h1>
           <p style={{ color: "rgba(255,255,255,.38)", marginBottom: 16, flexShrink: 0 }}>Real-time group chat · powered by Firestore</p>
 

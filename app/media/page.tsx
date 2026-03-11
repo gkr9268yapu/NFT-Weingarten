@@ -73,7 +73,7 @@ export default function MediaPage() {
   return (
     <div>
       <Navbar />
-      <main style={{ maxWidth: 1140, margin: "0 auto", paddingLeft: 28, paddingRight: 28 }} className="page-main">
+      <main style={{ maxWidth: 1140, margin: "0 auto", paddingLeft: 28, paddingRight: 28, paddingTop: 20 }} className="page-main">
 
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36, flexWrap: "wrap", gap: 16 }}>
