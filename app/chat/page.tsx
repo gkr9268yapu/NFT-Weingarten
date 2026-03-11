@@ -172,7 +172,7 @@ export default function ChatPage() {
 
       <style>{`
         @media (max-width: 768px) {
-          .chat-outer { padding: 8px 12px 0 12px !important; }
+          .chat-outer { padding: 64px 12px 0 12px !important; }
           .chat-outer h1 { font-size: 22px !important; margin-bottom: 2px !important; }
           .chat-outer p  { font-size: 11px !important; margin-bottom: 6px !important; }
         }
