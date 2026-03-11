@@ -23,6 +23,25 @@ export default function ChatPage() {
     if (!loading && !currentUser) router.push("/");
   }, [loading, currentUser, router]);
 
+  useEffect(() => {
+    const wrap = document.querySelector('.chat-page-wrap') as HTMLElement;
+    if (!wrap) return;
+
+    const handler = () => {
+      if (!window.visualViewport) return;
+      const vv = window.visualViewport;
+      wrap.style.height = `${vv.height - 56}px`;
+    };
+
+    window.visualViewport?.addEventListener('resize', handler);
+    window.visualViewport?.addEventListener('scroll', handler);
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handler);
+      window.visualViewport?.removeEventListener('scroll', handler);
+    };
+  }, []);
+
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
   );
