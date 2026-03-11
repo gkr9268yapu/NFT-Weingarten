@@ -254,6 +254,7 @@ export default function ChatRoom({
 
                             return (
                                 <div key={msg.id}
+                                    className="msg-bubble"
                                     ref={el => { if (el) msgRefs.current[msg.id] = el; }}
                                     style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default", transition: "background .4s" }}
                                     onTouchStart={e => {
@@ -603,6 +604,13 @@ export default function ChatRoom({
         @media (hover: hover) {
           div:hover > .hover-reply { opacity: 1 !important; display: flex !important; }
         }
+            }
+  .msg-bubble {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
       `}</style>
         </div>
     );
