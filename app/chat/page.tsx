@@ -11,34 +11,39 @@ export default function ChatPage() {
   const { currentUser, messages, loading } = useApp();
   const router = useRouter();
   const chatRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState("");
   const [openPick, setOpenPick] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
+  // Scroll to latest message
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages]);
 
+  // Redirect if not logged in
   useEffect(() => {
     if (!loading && !currentUser) router.push("/");
   }, [loading, currentUser, router]);
 
+  // Resize chat when keyboard opens/closes (works on iOS and Android)
   useEffect(() => {
-    const wrap = document.querySelector('.chat-page-wrap') as HTMLElement;
-    if (!wrap) return;
+    const wrap = wrapRef.current;
+    if (!wrap || !window.visualViewport) return;
 
     const handler = () => {
-      if (!window.visualViewport) return;
-      const vv = window.visualViewport;
-      wrap.style.height = `${vv.height - 56}px`;
+      const vv = window.visualViewport!;
+      wrap.style.height = `${vv.height}px`;
+      wrap.style.top = `${vv.offsetTop}px`;
     };
 
-    window.visualViewport?.addEventListener('resize', handler);
-    window.visualViewport?.addEventListener('scroll', handler);
+    window.visualViewport.addEventListener("resize", handler);
+    window.visualViewport.addEventListener("scroll", handler);
+    handler(); // run once on mount
 
     return () => {
-      window.visualViewport?.removeEventListener('resize', handler);
-      window.visualViewport?.removeEventListener('scroll', handler);
+      window.visualViewport!.removeEventListener("resize", handler);
+      window.visualViewport!.removeEventListener("scroll", handler);
     };
   }, []);
 
@@ -60,22 +65,36 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="chat-page-wrap" style={{ height: "calc(100dvh - 56px)", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
+    /* Outer wrap — fixed to visual viewport, resizes with keyboard */
+    <div ref={wrapRef} style={{
+      position: "fixed",
+      top: 0, left: 0, right: 0,
+      height: "100dvh",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+      background: "#070d1a",
+    }}>
+      {/* Navbar always at top */}
       <Navbar />
 
-      {/* fills space between navbar and bottom */}
+      {/* Chat content fills remaining space */}
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div className="chat-outer" style={{ maxWidth: 820, width: "100%", margin: "0 auto", padding: "8px 28px 28px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-
+        <div className="chat-outer" style={{
+          maxWidth: 820, width: "100%", margin: "0 auto",
+          padding: "8px 28px 28px",
+          flex: 1, minHeight: 0,
+          display: "flex", flexDirection: "column",
+        }}>
           <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 50, fontWeight: 900, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase", flexShrink: 0 }}>
             Team <span style={{ color: "#00e676" }}>Chat</span>
           </h1>
           <p style={{ color: "rgba(255,255,255,.38)", marginBottom: 16, flexShrink: 0 }}>Real-time group chat · powered by Firestore</p>
 
-          {/* Chat box fills remaining height */}
+          {/* Chat box */}
           <div style={{ flex: 1, minHeight: 0, background: "rgba(255,255,255,.02)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 22, overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
-            {/* ONLY this div scrolls */}
+            {/* Messages — only this scrolls */}
             <div ref={chatRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 24px", overscrollBehavior: "contain" }}>
               {messages.map(msg => {
                 const isMe = msg.user === currentUser.name;
@@ -133,7 +152,7 @@ export default function ChatPage() {
               )}
             </div>
 
-            {/* Input bar — pinned at bottom, never moves */}
+            {/* Input bar — always at bottom */}
             <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,.07)", padding: "14px 20px", display: "flex", gap: 10, background: "rgba(7,13,26,0.98)" }}>
               <input
                 value={text}
@@ -153,10 +172,9 @@ export default function ChatPage() {
 
       <style>{`
         @media (max-width: 768px) {
-          .chat-page-wrap { padding-top: 56px !important; }
-          .chat-outer { padding: 10px 12px 0 12px !important; }
-          .chat-outer h1 { font-size: 26px !important; margin-bottom: 2px !important; }
-          .chat-outer p  { font-size: 11px !important; margin-bottom: 8px !important; }
+          .chat-outer { padding: 8px 12px 0 12px !important; }
+          .chat-outer h1 { font-size: 22px !important; margin-bottom: 2px !important; }
+          .chat-outer p  { font-size: 11px !important; margin-bottom: 6px !important; }
         }
       `}</style>
     </div>
