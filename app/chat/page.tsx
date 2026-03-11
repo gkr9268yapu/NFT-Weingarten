@@ -145,8 +145,7 @@ export default function ChatListPage() {
           </div>
         )}
 
-        <div style={{ padding: "0 12px" }}>
-          {[...conversations].sort((a, b) => {
+        <div style={{ padding: "0 12px", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }}>          {[...conversations].sort((a, b) => {
             const ap = pinned.has(a.id) ? 1 : 0;
             const bp = pinned.has(b.id) ? 1 : 0;
             return bp - ap || b.lastTimestamp - a.lastTimestamp;
@@ -235,14 +234,16 @@ export default function ChatListPage() {
               { label: "🗑️  Delete", action: "delete", red: true },
             ].map(item => (
               <button key={item.action}
-                onClick={() => {
+                onClick={async () => {
                   if (item.action === "pin") {
                     setPinned(prev => { const next = new Set(prev); if (next.has(ctxConv.id)) next.delete(ctxConv.id); else next.add(ctxConv.id); return next; });
                   } else if (item.action === "select") {
                     setSelectConvMode(true);
                     setSelectedConvs(new Set([ctxConv.id]));
                   } else if (item.action === "delete") {
-                    if (confirm(`Delete chat with ${ctxConv.name}?`)) deleteConversation(ctxConv.id);
+                    if (confirm(`Delete chat with ${ctxConv.name}?`)) {
+                      await deleteConversation(ctxConv.id);
+                    }
                   }
                   setCtxConv(null);
                 }}
