@@ -158,7 +158,23 @@ export default function ChatListPage() {
 
             return (
               <div key={conv.id} style={{ position: "relative", marginBottom: 6 }}
-                onContextMenu={e => { e.preventDefault(); setCtxConv({ id: conv.id, name, x: e.clientX, y: e.clientY }); }}>
+                onContextMenu={e => { e.preventDefault(); setCtxConv({ id: conv.id, name, x: e.clientX, y: e.clientY }); }}
+                onTouchStart={e => {
+                  e.preventDefault();
+                  const timer = setTimeout(() => {
+                    if (navigator.vibrate) navigator.vibrate(40);
+                    setCtxConv({ id: conv.id, name, x: window.innerWidth / 2, y: window.innerHeight / 2 });
+                  }, 500);
+                  (e.currentTarget as HTMLElement).dataset.timer = String(timer);
+                }}
+                onTouchMove={e => {
+                  const dy = Math.abs(e.touches[0].clientY - (e.currentTarget.getBoundingClientRect().top));
+                  if (dy > 8) clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                }}
+                onTouchEnd={e => {
+                  clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                }}
+              >
                 <button
                   onClick={() => {
                     if (selectConvMode) {
