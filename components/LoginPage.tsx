@@ -68,12 +68,26 @@ export default function LoginPage() {
     } finally { setBusy(false); }
   };
 
+
   const handleSignup = async () => {
     if (!name || !email || !password) { setError("All fields are required."); return; }
-    if (validateEmail(email)) { setError(validateEmail(email)); return; }    if (!passValid) { setError("Please fix password requirements."); return; }
+    if (validateEmail(email)) { setError(validateEmail(email)); return; }
+    if (!passValid) { setError("Please fix password requirements."); return; }
     setBusy(true); setError("");
     try {
-      await signUp(name, email, password, "user");
+      // Check if name is already taken
+      const { getDocs, collection } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+      const snap = await getDocs(collection(db, "users"));
+      const nameTaken = snap.docs.some(
+        d => (d.data().name as string)?.toLowerCase() === name.trim().toLowerCase()
+      );
+      if (nameTaken) {
+        setError("This name is already taken. Please choose a different name.");
+        setBusy(false);
+        return;
+      }
+      await signUp(name.trim(), email, password, "user");
       setError("✓ Account created! Check your email to verify, then log in.");
       setMode("login");
       setPassword("");
@@ -81,7 +95,6 @@ export default function LoginPage() {
       setError((e as Error).message || "Sign up failed.");
     } finally { setBusy(false); }
   };
-
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#070d1a 0%,#0d1b35 60%,#070d1a 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
 
