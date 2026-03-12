@@ -8,15 +8,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "host";
     }
 
-    // users
     match /users/{uid} {
-      allow read:   if isSignedIn();
-      allow create: if request.auth.uid == uid;
-      allow update: if request.auth.uid == uid || isHost();
+      allow read:   if true;
+      allow create: if true;
+      allow update: if isSignedIn();
       allow delete: if isHost();
     }
 
-    // matches
     match /matches/{matchId} {
       allow read:   if isSignedIn();
       allow create: if isHost();
@@ -24,7 +22,6 @@ service cloud.firestore {
       allow delete: if isHost();
     }
 
-    // messages
     match /messages/{msgId} {
       allow read:   if isSignedIn();
       allow create: if isSignedIn();
@@ -32,13 +29,24 @@ service cloud.firestore {
       allow delete: if isHost();
     }
 
-    // media metadata (written by server-side API route — allow all writes)
-    match /media/{docId} {
+    match /conversations/{convId} {
       allow read:   if isSignedIn();
-      allow write:  if true;     // API route uploads on behalf of any signed-in user
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+      match /messages/{msgId} {
+        allow read:   if isSignedIn();
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
+      }
     }
 
-    // Google Drive refresh token (host-only)
+    match /media/{docId} {
+      allow read:  if isSignedIn();
+      allow write: if true;
+    }
+
     match /config/googleDriveToken {
       allow read, write: if isHost();
     }
