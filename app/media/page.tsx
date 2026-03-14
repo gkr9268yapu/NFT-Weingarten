@@ -83,11 +83,17 @@ export default function MediaPage() {
     const items = mediaItems.filter(m => selected.has(m.id));
     setDownloading(true);
     for (const item of items) {
-      await new Promise(res => setTimeout(res, 400));
-      window.open(
-        `https://drive.google.com/uc?export=download&id=${item.driveFileId}&confirm=t`,
-        "_blank"
-      );
+      const fileId = item.driveFileId ?? item.url.split("/api/image/")[1];
+      if (!fileId) continue;
+      const name = encodeURIComponent(item.filename ?? "image");
+      const a = document.createElement("a");
+      a.href = `/api/image/${fileId}?download=1&name=${name}`;
+      a.download = item.filename ?? "image";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      await new Promise(res => setTimeout(res, 800));
     }
     setDownloading(false);
     setSelectMode(false);
