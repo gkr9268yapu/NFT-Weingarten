@@ -11,8 +11,9 @@ const LINKS = [
   { href: "/chat", icon: "💬", label: "Chat" },
 ] as const;
 
-export default function Navbar({ totalUnread = 0 }: { totalUnread?: number }) {
-  const { currentUser, setCurrentUser } = useApp();
+export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?: number }) {
+  const { currentUser, setCurrentUser, totalUnread: contextUnread } = useApp();
+  const totalUnread = totalUnreadProp ?? contextUnread;
   const pathname = usePathname();
   const router = useRouter();
 

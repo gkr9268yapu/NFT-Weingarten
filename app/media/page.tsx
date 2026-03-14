@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import Navbar from "@/components/Navbar";
@@ -35,13 +35,10 @@ export default function MediaPage() {
   const canDownloadSel = isHost || selectedItems.length > 0;
   const canDeleteSelected = isHost || (mySelected.length === selectedItems.length && selectedItems.length > 0 && othersSelected.length === 0);
 
-  useEffect(() => {
-    if (!loading && !currentUser) router.push("/");
-  }, [loading, currentUser, router]);
-
-  if (loading || !currentUser) return (
+  if (loading) return (
     <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
   );
+  if (!currentUser) { router.push("/"); return null; }
 
   const uploadOne = async (file: File) => {
     const form = new FormData();
@@ -79,25 +76,62 @@ export default function MediaPage() {
     );
   };
 
+  const isMobile = typeof window !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   const handleBulkDownload = async () => {
     const items = mediaItems.filter(m => selected.has(m.id));
     setDownloading(true);
-    for (const item of items) {
-      const fileId = item.driveFileId ?? item.url.split("/api/image/")[1];
-      if (!fileId) continue;
-      const name = encodeURIComponent(item.filename ?? "image");
-      const a = document.createElement("a");
-      a.href = `/api/image/${fileId}?download=1&name=${name}`;
-      a.download = item.filename ?? "image";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      await new Promise(res => setTimeout(res, 800));
+    try {
+      if (isMobile) {
+        // Mobile — create zip file
+        const JSZip = (await import("jszip")).default;
+        const zip = new JSZip();
+        const folder = zip.folder("NFT-Weingarten-photos")!;
+
+        for (const item of items) {
+          const fileId = item.driveFileId ?? item.url.split("/api/image/")[1];
+          if (!fileId) continue;
+          try {
+            const res = await fetch(`/api/image/${fileId}`);
+            const blob = await res.blob();
+            const ext = item.filename?.split(".").pop() ?? "jpg";
+            folder.file(`${item.filename ?? fileId}.${ext}`, blob);
+          } catch {
+            console.warn("Failed to fetch:", fileId);
+          }
+        }
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "NFT-Weingarten-photos.zip";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+      } else {
+        // Desktop — download individually
+        for (const item of items) {
+          const fileId = item.driveFileId ?? item.url.split("/api/image/")[1];
+          if (!fileId) continue;
+          const name = encodeURIComponent(item.filename ?? "image");
+          const a = document.createElement("a");
+          a.href = `/api/image/${fileId}?download=1&name=${name}`;
+          a.download = item.filename ?? "image";
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          await new Promise(res => setTimeout(res, 800));
+        }
+      }
+    } finally {
+      setDownloading(false);
+      setSelectMode(false);
+      setSelected(new Set());
     }
-    setDownloading(false);
-    setSelectMode(false);
-    setSelected(new Set());
   };
 
   const handleDelete = async (item: MediaItem) => {
@@ -189,7 +223,7 @@ export default function MediaPage() {
                 {canDownloadSel && (
                   <button onClick={handleBulkDownload} disabled={selected.size === 0 || downloading}
                     style={{ background: selected.size === 0 ? "rgba(0,230,118,.2)" : "linear-gradient(135deg,#00e676,#00c853)", color: "#070d1a", border: "none", padding: "10px 18px", borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: selected.size === 0 ? "default" : "pointer", opacity: selected.size === 0 ? 0.5 : 1, display: "flex", alignItems: "center", gap: 6 }}>
-                    {downloading ? "Downloading…" : "⬇ Download"}
+                    {downloading ? (isMobile ? "Creating zip…" : "Downloading…") : "⬇ Download"}
                   </button>
                 )}
                 {canDeleteSelected && (

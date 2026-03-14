@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    const sw = `
+  const sw = `
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
 
@@ -23,20 +23,31 @@ messaging.onBackgroundMessage(payload => {
     icon:  "/logo.png",
     badge: "/logo.png",
     data:  payload.data,
+    vibrate: [200, 100, 200],
   });
 });
 
 self.addEventListener("notificationclick", e => {
   e.notification.close();
   const url = e.notification.data?.url ?? "/chat";
-  e.waitUntil(clients.openWindow(url));
+  e.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
 });
   `;
 
-    return new NextResponse(sw, {
-        headers: {
-            "Content-Type": "application/javascript",
-            "Cache-Control": "no-cache",
-        },
-    });
+  return new NextResponse(sw, {
+    headers: {
+      "Content-Type": "application/javascript",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+    },
+  });
 }

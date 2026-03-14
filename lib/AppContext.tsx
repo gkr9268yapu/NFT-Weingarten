@@ -5,7 +5,7 @@ import React, {
 } from "react";
 import type { User, Match, Message, MediaItem } from "./types";
 import { listenAuthState } from "./firebaseAuth";
-import { listenUsers, listenMatches, listenMessages } from "./firebaseDB";
+import { listenUsers, listenMatches, listenMessages, listenConversations } from "./firebaseDB";
 import { listenMedia } from "./firebaseStorage";
 
 interface AppContextValue {
@@ -17,6 +17,7 @@ interface AppContextValue {
   messages: Message[];
   mediaItems: MediaItem[];
   loading: boolean;
+  totalUnread: number;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -28,6 +29,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalUnread, setTotalUnread] = useState(0);
 
   // Holds the unsub functions for the Firestore data listeners
   const dataUnsubs = useRef<(() => void)[]>([]);
@@ -42,15 +44,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMediaItems([]);
   };
 
-  const startDataListeners = () => {
-    // Guard: don't double-subscribe
+  const startDataListeners = (userId: string) => {
     if (dataUnsubs.current.length > 0) return;
-
     dataUnsubs.current = [
       listenUsers(setUsers),
       listenMatches(setMatches),
       listenMessages(setMessages),
       listenMedia(setMediaItems),
+      listenConversations(userId, convs => {
+        const total = convs.reduce((sum, c) => sum + ((c.unread?.[userId] ?? 0)), 0);
+        setTotalUnread(total);
+      }),
     ];
   };
 
@@ -59,8 +63,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const unsubAuth = listenAuthState(user => {
       if (user) {
         setCurrentUser(user);
-        startDataListeners();
-        // Init push notifications
+        startDataListeners(user.id);
         import("./notifications").then(({ initPushNotifications }) => {
           initPushNotifications(user.id).catch(console.error);
         });
@@ -86,6 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       messages,
       mediaItems,
       loading,
+      totalUnread,
     }}>
       {children}
     </AppContext.Provider>
