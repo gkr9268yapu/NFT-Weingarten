@@ -62,9 +62,10 @@ function toMessage(d: { id: string; data: () => Record<string, unknown> }): Mess
     fileUrl: (data.fileUrl as string | undefined),
     fileName: (data.fileName as string | undefined),
     fileSize: (data.fileSize as string | undefined),
+    driveFileId: (data.driveFileId as string | undefined),
     poll: (data.poll as import("./types").Poll | undefined),
     reactions: (data.reactions as Record<string, string[]>) ?? {},
-    replyTo: (data.replyTo as import("./types").ReplyTo | undefined),
+    replyTo: (data.replyTo as ReplyTo | undefined),
     deletedFor: (data.deletedFor as string[]) ?? [],
     deletedForEveryone: (data.deletedForEveryone as boolean) ?? false,
     pinned: (data.pinned as boolean | undefined) ?? false,
@@ -101,13 +102,14 @@ export async function sendMessage(
 
 export async function sendImageMessage(
   userId: string, user: string, imageUrl: string,
-  replyTo?: ReplyTo
+  replyTo?: ReplyTo, driveFileId?: string
 ): Promise<void> {
   const { time, dateStr } = nowStrings();
   await addDoc(collection(db, "messages"), {
     userId, user, text: "📷 Image", imageUrl, time, dateStr,
     type: "image", reactions: {}, replyTo: replyTo ?? null,
     deletedFor: [], deletedForEveryone: false,
+    driveFileId: driveFileId ?? null,
     createdAt: serverTimestamp(),
   });
 }
@@ -123,8 +125,23 @@ export async function deleteMessageForMe(msgId: string, userId: string, collPath
 }
 
 export async function deleteMessageForEveryone(msgId: string, collPath = "messages"): Promise<void> {
-  await updateDoc(doc(db, collPath, msgId), {
-    deletedForEveryone: true, text: "This message was deleted", imageUrl: null, type: "text",
+  const ref = doc(db, collPath, msgId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const data = snap.data();
+    // Delete file from Google Drive if it has one
+    const driveFileId = data.driveFileId as string | undefined;
+    if (driveFileId) {
+      await fetch(`/api/delete-file/${driveFileId}`, { method: "DELETE" }).catch(() => { });
+    }
+  }
+  await updateDoc(ref, {
+    deletedForEveryone: true,
+    text: "This message was deleted",
+    imageUrl: null,
+    fileUrl: null,
+    driveFileId: null,
+    type: "text",
   });
 }
 
@@ -145,11 +162,23 @@ export function getConvId(uid1: string, uid2: string): string {
   return [uid1, uid2].sort().join("_");
 }
 
+export function getConversationId(myId: string, otherId: string): string {
+  return getConvId(myId, otherId);
+}
+
 export async function getOrCreateConversation(
   myId: string, myName: string,
   otherId: string, otherName: string
 ): Promise<string> {
   const convId = getConvId(myId, otherId);
+  // Don't create the doc here — it gets created on first message sent
+  return convId;
+}
+
+export async function ensureConversationExists(
+  convId: string, myId: string, myName: string,
+  otherId: string, otherName: string
+): Promise<void> {
   const ref = doc(db, "conversations", convId);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
@@ -162,7 +191,6 @@ export async function getOrCreateConversation(
       unread: { [myId]: 0, [otherId]: 0 },
     });
   }
-  return convId;
 }
 
 export function listenConversations(userId: string, cb: (convs: Conversation[]) => void): Unsubscribe {
@@ -184,8 +212,10 @@ export function listenPrivateMessages(convId: string, cb: (msgs: Message[]) => v
 
 export async function sendPrivateMessage(
   convId: string, userId: string, user: string, text: string,
-  otherId: string, replyTo?: ReplyTo
+  otherId: string, replyTo?: ReplyTo,
+  otherName?: string
 ): Promise<void> {
+  await ensureConversationExists(convId, userId, user, otherId, otherName ?? otherId);
   const { time, dateStr } = nowStrings();
   const msgRef = collection(db, "conversations", convId, "messages");
   await addDoc(msgRef, {
@@ -205,7 +235,7 @@ export async function sendPrivateMessage(
 
 export async function sendPrivateImageMessage(
   convId: string, userId: string, user: string, imageUrl: string,
-  otherId: string, replyTo?: ReplyTo
+  otherId: string, replyTo?: ReplyTo, driveFileId?: string
 ): Promise<void> {
   const { time, dateStr } = nowStrings();
   const msgRef = collection(db, "conversations", convId, "messages");
@@ -213,6 +243,7 @@ export async function sendPrivateImageMessage(
     userId, user, text: "📷 Image", imageUrl, time, dateStr,
     type: "image", reactions: {}, replyTo: replyTo ?? null,
     deletedFor: [], deletedForEveryone: false,
+    driveFileId: driveFileId ?? null,
     createdAt: serverTimestamp(),
   });
   const snap = await getDoc(doc(db, "conversations", convId));
@@ -267,13 +298,15 @@ export async function sendDocumentMessage(
   userId: string, user: string,
   fileUrl: string, fileName: string, fileSize: string,
   replyTo?: ReplyTo,
-  collPath = "messages"
+  collPath = "messages",
+  driveFileId?: string
 ): Promise<void> {
   const { time, dateStr } = nowStrings();
   await addDoc(collection(db, collPath), {
     userId, user,
     text: `📄 ${fileName}`,
     fileUrl, fileName, fileSize,
+    driveFileId: driveFileId ?? null,
     time, dateStr,
     type: "document",
     reactions: {}, replyTo: replyTo ?? null,
@@ -285,7 +318,7 @@ export async function sendDocumentMessage(
 export async function sendPrivateDocumentMessage(
   convId: string, userId: string, user: string,
   fileUrl: string, fileName: string, fileSize: string,
-  otherId: string, replyTo?: ReplyTo
+  otherId: string, replyTo?: ReplyTo, driveFileId?: string
 ): Promise<void> {
   const { time, dateStr } = nowStrings();
   const msgRef = collection(db, "conversations", convId, "messages");
@@ -293,6 +326,7 @@ export async function sendPrivateDocumentMessage(
     userId, user,
     text: `📄 ${fileName}`,
     fileUrl, fileName, fileSize,
+    driveFileId: driveFileId ?? null,
     time, dateStr,
     type: "document",
     reactions: {}, replyTo: replyTo ?? null,
@@ -405,12 +439,43 @@ export async function unpinMessage(msgId: string, collPath = "messages"): Promis
   await updateDoc(doc(db, collPath, msgId), { pinned: false });
 }
 
+/* ══ MUTE ════════════════════════════════════════════════════ */
+export async function muteConversation(
+  convId: string, userId: string, until: number | null
+): Promise<void> {
+  await updateDoc(doc(db, "conversations", convId), {
+    [`muted.${userId}`]: { until },
+  });
+}
+
+export async function unmuteConversation(
+  convId: string, userId: string
+): Promise<void> {
+  const { deleteField } = await import("firebase/firestore");
+  await updateDoc(doc(db, "conversations", convId), {
+    [`muted.${userId}`]: deleteField(),
+  });
+}
+
+export function isConversationMuted(
+  conv: { muted?: Record<string, { until: number | null }> },
+  userId: string
+): boolean {
+  const m = conv.muted?.[userId];
+  if (!m) return false;
+  if (m.until === null) return true; // muted forever
+  return Date.now() < m.until;
+}
+
+/* ══ FCM TOKEN ═══════════════════════════════════════════════ */
+export async function saveFCMToken(userId: string, token: string): Promise<void> {
+  await updateDoc(doc(db, "users", userId), { fcmToken: token });
+}
+
 export async function deleteConversation(convId: string): Promise<void> {
-  // First delete all messages inside the conversation
   const msgsSnap = await getDocs(collection(db, "conversations", convId, "messages"));
   for (const msgDoc of msgsSnap.docs) {
     await deleteDoc(doc(db, "conversations", convId, "messages", msgDoc.id));
   }
-  // Then delete the conversation itself
   await deleteDoc(doc(db, "conversations", convId));
 }

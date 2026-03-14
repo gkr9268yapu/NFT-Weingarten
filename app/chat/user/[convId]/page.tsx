@@ -13,7 +13,7 @@ import ChatRoom from "@/components/ChatRoom";
 import type { Message, Conversation, ReplyTo, PollOption } from "@/lib/types";
 
 export default function PrivateChatPage() {
-    const { currentUser, loading } = useApp();
+    const { currentUser, users, loading } = useApp();
     const router = useRouter();
     const params = useParams();
     const convId = params.convId as string;
@@ -64,35 +64,57 @@ export default function PrivateChatPage() {
     );
     if (!currentUser) return null;
 
-    const otherId = conv?.participants.find(p => p !== currentUser.id) ?? "";
-    const otherName = conv?.participantNames[otherId] ?? "…";
-
+    const otherId = conv?.participants.find(p => p !== currentUser?.id)
+        ?? convId.split("_").find(p => p !== currentUser?.id)
+        ?? "";
+    const otherName = conv?.participantNames[otherId]
+        ?? users.find(u => u.id === otherId)?.name
+        ?? "…";
+        
     const upload = async (file: File) => {
         const form = new FormData();
         form.append("file", file);
         form.append("uploader", currentUser.name);
         form.append("chatOnly", "true");
         const res = await fetch("/api/upload", { method: "POST", body: form });
-        return await res.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
+        return data;
     };
 
     const currentOtherId = () => conv?.participants.find(p => p !== currentUser.id) ?? "";
+    const currentOtherName = () => conv?.participantNames[currentOtherId()] ?? otherName;
 
-    const handleSendText = async (text: string, replyTo?: ReplyTo) =>
-        sendPrivateMessage(convId, currentUser.id, currentUser.name, text, currentOtherId(), replyTo);
+    const handleSendText = async (text: string, replyTo?: ReplyTo) => {
+        await sendPrivateMessage(convId, currentUser.id, currentUser.name, text, currentOtherId(), replyTo, currentOtherName());
+        // Push notification
+        const { sendPushToUser } = await import("@/lib/notifications");
+        await sendPushToUser(currentOtherId(), currentUser.name, text, `/chat/user/${convId}`).catch(() => { });
+    };
 
     const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
-        if (data.url) await sendPrivateImageMessage(convId, currentUser.id, currentUser.name, data.url, currentOtherId(), replyTo);
+        if (data.url) {
+            await sendPrivateImageMessage(convId, currentUser.id, currentUser.name, data.url, currentOtherId(), replyTo, data.driveFileId);
+            const { sendPushToUser } = await import("@/lib/notifications");
+            await sendPushToUser(currentOtherId(), currentUser.name, "📷 Sent an image", `/chat/user/${convId}`).catch(() => { });
+        }
     };
 
     const handleSendDocument = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
-        if (data.url) await sendPrivateDocumentMessage(convId, currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", currentOtherId(), replyTo);
+        if (data.url) {
+            await sendPrivateDocumentMessage(convId, currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", currentOtherId(), replyTo, data.driveFileId);
+            const { sendPushToUser } = await import("@/lib/notifications");
+            await sendPushToUser(currentOtherId(), currentUser.name, `📄 ${file.name}`, `/chat/user/${convId}`).catch(() => { });
+        }
     };
 
-    const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) =>
-        sendPrivatePollMessage(convId, currentUser.id, currentUser.name, question, options, multiChoice, currentOtherId());
+    const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) => {
+        await sendPrivatePollMessage(convId, currentUser.id, currentUser.name, question, options, multiChoice, currentOtherId());
+        const { sendPushToUser } = await import("@/lib/notifications");
+        await sendPushToUser(currentOtherId(), currentUser.name, `📊 ${question}`, `/chat/user/${convId}`).catch(() => { });
+    };
 
     const handleVote = async (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) =>
         voteOnPrivatePoll(convId, msgId, optionId, currentUser.id, multiChoice, currentOptions);

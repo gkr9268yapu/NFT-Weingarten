@@ -10,7 +10,6 @@ import { isHostEmail } from "./hostEmails";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import type { Role, User } from "./types";
-import { browserLocalPersistence, setPersistence } from "firebase/auth";
 
 /* ── Sign up ──────────────────────────────────────────────── */
 export async function signUp(
@@ -35,10 +34,9 @@ export async function signUp(
 }
 /* ── Log in ───────────────────────────────────────────────── */
 export async function logIn(
-  email: string, 
+  email: string,
   password: string
 ): Promise<User> {
-  await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const snap = await getDoc(doc(db, "users", cred.user.uid));
   if (!snap.exists()) throw new Error("User profile not found.");

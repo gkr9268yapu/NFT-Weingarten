@@ -51,6 +51,14 @@ export default function HomePage() {
     setBusy(true);
     try {
       await createMatch({ ...newForm, available: [], notAvailable: [] });
+      // Notify all players about new match
+      const { sendPushToAll } = await import("@/lib/notifications");
+      await sendPushToAll(
+        currentUser.id,
+        "📅 New Match Added",
+        `${newForm.team1} vs ${newForm.team2} — ${newForm.date}`,
+        "/home"
+      ).catch(() => { });
       setShowAdd(false);
       setNewForm(EMPTY_FORM);
     } finally { setBusy(false); }
@@ -62,6 +70,14 @@ export default function HomePage() {
     try {
       const { id, ...data } = editMatch;
       await updateMatch(id, data);
+      // Notify all players that match was updated
+      const { sendPushToAll } = await import("@/lib/notifications");
+      await sendPushToAll(
+        currentUser.id,
+        "📅 Match Updated",
+        `${editMatch.team1} vs ${editMatch.team2} — ${editMatch.date}`,
+        "/home"
+      ).catch(() => { });
       setEditMatch(null);
     } finally { setBusy(false); }
   };
@@ -79,7 +95,7 @@ export default function HomePage() {
   return (
     <div>
       <Navbar />
-      <main style={{ maxWidth: 1140, margin: "0 auto", paddingLeft: 0, paddingRight: 0, paddingTop: 20, paddingBottom: 40 }} className="page-main">
+      <main style={{ maxWidth: 1140, margin: "0 auto", padding: "48px 28px" }} className="page-main">
         <div className="fade-in" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 36 }}>
           <div>
             <h1 style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 50, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", lineHeight: 1 }}>

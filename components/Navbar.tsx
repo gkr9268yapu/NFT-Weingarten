@@ -11,7 +11,7 @@ const LINKS = [
   { href: "/chat", icon: "💬", label: "Chat" },
 ] as const;
 
-export default function Navbar() {
+export default function Navbar({ totalUnread = 0 }: { totalUnread?: number }) {
   const { currentUser, setCurrentUser } = useApp();
   const pathname = usePathname();
   const router = useRouter();
@@ -147,6 +147,7 @@ export default function Navbar() {
         <div style={{ display: "flex", gap: 4 }}>
           {LINKS.map(({ href, icon, label }) => {
             const active = pathname === href;
+            const showBadge = href === "/chat" && totalUnread > 0;
             return (
               <Link key={href} href={href} style={{
                 background: active ? "#00e676" : "transparent",
@@ -154,9 +155,14 @@ export default function Navbar() {
                 padding: "9px 18px", borderRadius: 10, textDecoration: "none",
                 fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
                 fontSize: 15, letterSpacing: .5, textTransform: "uppercase",
-                display: "flex", alignItems: "center", gap: 6,
+                display: "flex", alignItems: "center", gap: 6, position: "relative",
               }}>
                 {icon} {label}
+                {showBadge && (
+                  <span style={{ background: "#ff5252", color: "#fff", borderRadius: "50%", minWidth: 18, height: 18, fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", position: "absolute", top: 2, right: 2 }}>
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -187,10 +193,16 @@ export default function Navbar() {
         <div className="mob-links">
           {LINKS.map(({ href, icon, label }) => {
             const active = pathname === href;
+            const showBadge = href === "/chat" && totalUnread > 0;
             return (
-              <Link key={href} href={href} className="mob-link" data-active={active}>
+              <Link key={href} href={href} className="mob-link" data-active={active} style={{ position: "relative" }}>
                 <span className="mob-link-icon">{icon}</span>
                 <span className="mob-link-label" data-active={active}>{label}</span>
+                {showBadge && (
+                  <span style={{ position: "absolute", top: 0, right: 4, background: "#ff5252", color: "#fff", borderRadius: "50%", minWidth: 14, height: 14, fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" }}>
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
               </Link>
             );
           })}

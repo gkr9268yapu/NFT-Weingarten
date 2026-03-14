@@ -56,6 +56,7 @@ export default function ChatRoom({
     const [bulkDelete, setBulkDelete] = useState(false);
     const [showPlus, setShowPlus] = useState(false);
     const [showPoll, setShowPoll] = useState(false);
+    const [tappedMsg, setTappedMsg] = useState<string | null>(null);
 
     const touchStartX = useRef(0);
     const touchStartY = useRef(0);
@@ -125,8 +126,14 @@ export default function ChatRoom({
         } else if (action === "copy" && msg.type === "text") {
             await navigator.clipboard.writeText(msg.text).catch(() => { });
         } else if (action === "download" && (msg.type === "document" || msg.type === "image")) {
-            const url = msg.fileUrl ?? msg.imageUrl ?? "";
-            const a = document.createElement("a"); a.href = url; a.download = msg.fileName ?? "file"; a.click();
+            const fileUrl = msg.fileUrl ?? msg.imageUrl ?? "";
+            const fileId = msg.driveFileId ?? fileUrl.split("/api/image/")[1] ?? "";
+            if (fileId) {
+                const name = encodeURIComponent(msg.fileName ?? "file");
+                window.open(`/api/image/${fileId}?download=1&name=${name}`, "_blank");
+            } else if (fileUrl) {
+                window.open(fileUrl, "_blank");
+            }
         } else if (action === "select") {
             setSelectMode(true); setSelected(new Set([ctx.msgId]));
         } else if (action === "pin") {
@@ -184,18 +191,13 @@ export default function ChatRoom({
     }
 
     function ctxPos(x: number, y: number) {
-        const isMobile = window.innerWidth < 768;
-        if (isMobile) {
-            return {
-                left: Math.max(8, (window.innerWidth - 200) / 2),
-                top: Math.max(60, (window.innerHeight - 340) / 2),
-            };
-        }
+        const w = 200, h = 340;
         return {
-            left: Math.min(x, window.innerWidth - 208),
-            top: Math.min(y, window.innerHeight - 348),
+            left: Math.min(x, (typeof window !== "undefined" ? window.innerWidth : 400) - w - 8),
+            top: Math.min(y, (typeof window !== "undefined" ? window.innerHeight : 700) - h - 8),
         };
     }
+
     const totalVotes = (options: PollOption[]) => options.reduce((s, o) => s + o.votes.length, 0);
 
     return (
@@ -254,40 +256,34 @@ export default function ChatRoom({
 
                             return (
                                 <div key={msg.id}
-                                    className="msg-bubble"
                                     ref={el => { if (el) msgRefs.current[msg.id] = el; }}
+                                    className="msg-bubble"
                                     style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default", transition: "background .4s" }}
                                     onTouchStart={e => {
-                                        e.preventDefault();
                                         touchStartX.current = e.touches[0].clientX;
                                         touchStartY.current = e.touches[0].clientY;
                                         swipedRef.current = false;
-                                        const timer = setTimeout(() => {
-                                            if (navigator.vibrate) navigator.vibrate(40);
-                                            if (selectMode) { toggleSelect(msg.id); return; }
-                                            openCtx(msg.id, window.innerWidth / 2, window.innerHeight / 2);
-                                        }, 500);
-                                        (e.currentTarget as HTMLElement).dataset.timer = String(timer);
                                     }}
                                     onTouchMove={e => {
                                         const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
                                         const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
-                                        if (dy > 8) {
-                                            clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
-                                        }
-                                        if (!swipedRef.current && !selectMode) {
-                                            const swipeX = e.touches[0].clientX - touchStartX.current;
-                                            if (swipeX > 55 && !isDeleted) {
-                                                swipedRef.current = true;
-                                                clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
-                                                setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type });
-                                                setTimeout(() => inputRef.current?.focus(), 50);
-                                            }
+                                        if (dx > 10 || dy > 10) swipedRef.current = true;
+                                        // swipe right to reply
+                                        const swipeX = e.touches[0].clientX - touchStartX.current;
+                                        if (swipeX > 55 && !isDeleted && !swipedRef.current) {
+                                            swipedRef.current = true;
+                                            setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type });
+                                            setTimeout(() => inputRef.current?.focus(), 50);
                                         }
                                     }}
-                                    onTouchEnd={e => {
-                                        clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
-                                    }}                                    onContextMenu={e => { e.preventDefault(); if (selectMode) { toggleSelect(msg.id); return; } openCtx(msg.id, e.clientX, e.clientY); }}
+                                    onTouchEnd={() => {
+                                        if (!swipedRef.current && !selectMode) {
+                                            // single tap — show/hide the ⋮ button
+                                            setTappedMsg(prev => prev === msg.id ? null : msg.id);
+                                        }
+                                        if (selectMode) toggleSelect(msg.id);
+                                    }}
+                                    onContextMenu={e => { e.preventDefault(); if (selectMode) { toggleSelect(msg.id); return; } openCtx(msg.id, e.clientX, e.clientY); }}
                                     onDoubleClick={() => { if (!isDeleted && !selectMode) { setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type }); setTimeout(() => inputRef.current?.focus(), 50); } }}
                                     onClick={() => { if (selectMode) toggleSelect(msg.id); }}
                                 >
@@ -395,6 +391,16 @@ export default function ChatRoom({
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Mobile tap menu button */}
+                                    {tappedMsg === msg.id && !selectMode && !isDeleted && (
+                                        <button
+                                            className="mobile-menu-btn"
+                                            onClick={e => { e.stopPropagation(); setTappedMsg(null); openCtx(msg.id, window.innerWidth / 2, window.innerHeight / 2); }}
+                                            style={{ background: "rgba(14,24,40,.95)", border: "1px solid rgba(255,255,255,.15)", color: "#fff", borderRadius: 20, padding: "4px 10px", fontSize: 18, cursor: "pointer", flexShrink: 0, alignSelf: "center", letterSpacing: 2, lineHeight: 1 }}>
+                                            ⋯
+                                        </button>
+                                    )}
 
                                     {/* Desktop hover reply */}
                                     {!selectMode && !isDeleted && (
@@ -597,18 +603,14 @@ export default function ChatRoom({
             )}
 
             <style>{`
-            .msg-bubble {
-                -webkit-user-select: none;
-                user-select: none;
-                -webkit-touch-callout: none;
-                touch-action: pan-y;
-            }
-            .hover-reply { display: none !important; }
-            .mobile-menu-btn { display: none !important; }
-            @media (hover: hover) {
-                div:hover > .hover-reply { opacity: 1 !important; display: flex !important; }
-            }
-            `}</style>
+        .msg-bubble { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        .hover-reply { display: none !important; }
+        .mobile-menu-btn { display: flex; }
+        @media (hover: hover) {
+          div:hover > .hover-reply { opacity: 1 !important; display: flex !important; }
+          .mobile-menu-btn { display: none !important; }
+        }
+      `}</style>
         </div>
     );
 }

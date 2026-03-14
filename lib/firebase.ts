@@ -2,6 +2,10 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth }     from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage }   from "firebase/storage";
+import { browserLocalPersistence, setPersistence } from "firebase/auth";
+
+
+
 
 const firebaseConfig = {
   apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -13,8 +17,10 @@ const firebaseConfig = {
 };
 
 // Prevent re-initialisation during hot-reload
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth    = getAuth(app);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
+
+// Set persistence immediately so user stays logged in
+setPersistence(auth, browserLocalPersistence).catch(console.error);

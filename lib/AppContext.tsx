@@ -4,30 +4,30 @@ import React, {
   useEffect, useRef, ReactNode,
 } from "react";
 import type { User, Match, Message, MediaItem } from "./types";
-import { listenAuthState }                           from "./firebaseAuth";
+import { listenAuthState } from "./firebaseAuth";
 import { listenUsers, listenMatches, listenMessages } from "./firebaseDB";
-import { listenMedia }                               from "./firebaseStorage";
+import { listenMedia } from "./firebaseStorage";
 
 interface AppContextValue {
-  currentUser:    User | null;
+  currentUser: User | null;
   setCurrentUser: (u: User | null) => void;
-  users:          User[];
-  matches:        Match[];
-  setMatches:     React.Dispatch<React.SetStateAction<Match[]>>;
-  messages:       Message[];
-  mediaItems:     MediaItem[];
-  loading:        boolean;
+  users: User[];
+  matches: Match[];
+  setMatches: React.Dispatch<React.SetStateAction<Match[]>>;
+  messages: Message[];
+  mediaItems: MediaItem[];
+  loading: boolean;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users,       setUsers]       = useState<User[]>([]);
-  const [matches,     setMatches]     = useState<Match[]>([]);
-  const [messages,    setMessages]    = useState<Message[]>([]);
-  const [mediaItems,  setMediaItems]  = useState<MediaItem[]>([]);
-  const [loading,     setLoading]     = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Holds the unsub functions for the Firestore data listeners
   const dataUnsubs = useRef<(() => void)[]>([]);
@@ -60,6 +60,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (user) {
         setCurrentUser(user);
         startDataListeners();
+        // Init push notifications
+        import("./notifications").then(({ initPushNotifications }) => {
+          initPushNotifications(user.id).catch(console.error);
+        });
       } else {
         setCurrentUser(null);
         stopDataListeners();

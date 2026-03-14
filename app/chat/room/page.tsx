@@ -48,24 +48,39 @@ export default function TeamChatPage() {
         form.append("chatOnly", "true");
         const res = await fetch("/api/upload", { method: "POST", body: form });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
         return data;
     };
 
-    const handleSendText = async (text: string, replyTo?: ReplyTo) =>
-        sendMessage(currentUser.id, currentUser.name, text, replyTo);
+    const handleSendText = async (text: string, replyTo?: ReplyTo) => {
+        await sendMessage(currentUser.id, currentUser.name, text, replyTo);
+        const { sendPushToAll } = await import("@/lib/notifications");
+        await sendPushToAll(currentUser.id, currentUser.name, text, "/chat/room").catch(() => { });
+    };
 
     const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
-        if (data.url) await sendImageMessage(currentUser.id, currentUser.name, data.url, replyTo);
+        if (data.url) {
+            await sendImageMessage(currentUser.id, currentUser.name, data.url, replyTo, data.driveFileId);
+            const { sendPushToAll } = await import("@/lib/notifications");
+            await sendPushToAll(currentUser.id, currentUser.name, "📷 Sent an image", "/chat/room").catch(() => { });
+        }
     };
 
     const handleSendDocument = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
-        if (data.url) await sendDocumentMessage(currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", replyTo);
+        if (data.url) {
+            await sendDocumentMessage(currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", replyTo, "messages", data.driveFileId);
+            const { sendPushToAll } = await import("@/lib/notifications");
+            await sendPushToAll(currentUser.id, currentUser.name, `📄 ${file.name}`, "/chat/room").catch(() => { });
+        }
     };
 
-    const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) =>
-        sendPollMessage(currentUser.id, currentUser.name, question, options, multiChoice);
+    const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) => {
+        await sendPollMessage(currentUser.id, currentUser.name, question, options, multiChoice);
+        const { sendPushToAll } = await import("@/lib/notifications");
+        await sendPushToAll(currentUser.id, currentUser.name, `📊 ${question}`, "/chat/room").catch(() => { });
+    };
 
     const handleVote = async (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) =>
         voteOnPoll(msgId, optionId, currentUser.id, multiChoice, currentOptions);

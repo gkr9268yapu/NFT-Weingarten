@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file") as File | null;
     const uploader = form.get("uploader") as string | null;
-    const chatOnly = form.get("chatOnly") as string | null; // "true" = don't save to media collection
+    const chatOnly = form.get("chatOnly") as string | null;
 
     if (!file || !uploader) {
       return NextResponse.json({ error: "Missing file or uploader" }, { status: 400 });
@@ -18,10 +18,15 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const drive = await getDriveClient();
 
+    // Use separate folder for chat files vs media files
+    const folderId = chatOnly === "true"
+      ? process.env.GOOGLE_CHAT_FOLDER_ID!
+      : process.env.GOOGLE_DRIVE_FOLDER_ID!;
+
     const driveRes = await drive.files.create({
       requestBody: {
         name: file.name,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
+        parents: [folderId],
       },
       media: {
         mimeType: file.type || "application/octet-stream",
@@ -53,7 +58,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // File size
     const bytes = file.size;
     const fileSize = bytes < 1024 * 1024
       ? `${(bytes / 1024).toFixed(1)} KB`
@@ -64,6 +68,7 @@ export async function POST(req: NextRequest) {
       url: fileUrl,
       filename: fileName,
       fileSize,
+      driveFileId: fileId,
       uploader,
       date: today,
     });

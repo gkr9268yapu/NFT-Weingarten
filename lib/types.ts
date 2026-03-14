@@ -60,6 +60,7 @@ export interface Message {
   fileUrl?: string;
   fileName?: string;
   fileSize?: string;
+  driveFileId?: string;
   poll?: Poll;
   reactions: Reactions;
   replyTo?: ReplyTo;
@@ -88,3 +89,12 @@ export interface MediaItem {
 }
 
 export type Page = "home" | "media" | "chat";
+
+export interface MuteSettings {
+  until: number | null; // timestamp ms, null = muted forever
+}
+
+export interface ConversationMeta {
+  pinned: boolean;
+  muted: MuteSettings | null;
+}
