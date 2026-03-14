@@ -269,27 +269,35 @@ export default function ChatRoom({
                                     className="msg-bubble"
                                     style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default", transition: "background .4s" }}
                                     onTouchStart={e => {
+                                        e.preventDefault();
                                         touchStartX.current = e.touches[0].clientX;
                                         touchStartY.current = e.touches[0].clientY;
                                         swipedRef.current = false;
+                                        const timer = setTimeout(() => {
+                                            if (navigator.vibrate) navigator.vibrate(40);
+                                            if (selectMode) { toggleSelect(msg.id); return; }
+                                            openCtx(msg.id, window.innerWidth / 2, window.innerHeight / 2);
+                                        }, 500);
+                                        (e.currentTarget as HTMLElement).dataset.timer = String(timer);
                                     }}
                                     onTouchMove={e => {
                                         const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
                                         const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
-                                        if (dx > 10 || dy > 10) swipedRef.current = true;
-                                        // swipe right to reply
-                                        const swipeX = e.touches[0].clientX - touchStartX.current;
-                                        if (swipeX > 55 && !isDeleted && !swipedRef.current) {
-                                            swipedRef.current = true;
-                                            setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type });
-                                            setTimeout(() => inputRef.current?.focus(), 50);
+                                        if (dy > 8) {
+                                            clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                                        }
+                                        if (!swipedRef.current && !selectMode) {
+                                            const swipeX = e.touches[0].clientX - touchStartX.current;
+                                            if (swipeX > 55 && !isDeleted && dx > dy) {
+                                                swipedRef.current = true;
+                                                clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                                                setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type });
+                                                setTimeout(() => inputRef.current?.focus(), 50);
+                                            }
                                         }
                                     }}
-                                    onTouchEnd={() => {
-                                        if (!swipedRef.current && !selectMode) {
-                                            // single tap — show/hide the ⋮ button
-                                            setTappedMsg(prev => prev === msg.id ? null : msg.id);
-                                        }
+                                    onTouchEnd={e => {
+                                        clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
                                         if (selectMode) toggleSelect(msg.id);
                                     }}
                                     onContextMenu={e => { e.preventDefault(); if (selectMode) { toggleSelect(msg.id); return; } openCtx(msg.id, e.clientX, e.clientY); }}
@@ -613,12 +621,16 @@ export default function ChatRoom({
             )}
 
             <style>{`
-        .msg-bubble { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        .msg-bubble {
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+          touch-action: pan-y;
+        }
         .hover-reply { display: none !important; }
-        .mobile-menu-btn { display: flex; }
+        .mobile-menu-btn { display: none !important; }
         @media (hover: hover) {
           div:hover > .hover-reply { opacity: 1 !important; display: flex !important; }
-          .mobile-menu-btn { display: none !important; }
         }
       `}</style>
         </div>
