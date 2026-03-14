@@ -37,7 +37,9 @@ export default function TeamChatPage() {
     }, []);
 
     if (loading) return (
-        <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
+        <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
+        </div>
     );
     if (!currentUser) return null;
 
@@ -89,8 +91,7 @@ export default function TeamChatPage() {
         <div ref={wrapRef} style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
             <div style={{ flexShrink: 0, height: 56, background: "rgba(7,13,26,.97)", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12 }}>
                 <button onClick={() => router.push("/chat")} style={{ background: "none", border: "none", color: "rgba(255,255,255,.6)", fontSize: 22, cursor: "pointer", padding: "4px 8px 4px 0" }}>←</button>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#00e676,#00c853)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>⚽</div>
-                <div>
+                <img src="/logo.png" alt="NFT Weingarten" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />                <div>
                     <div style={{ color: "#fff", fontWeight: 700, fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, letterSpacing: .5 }}>NFT Weingarten</div>
                     <div style={{ color: "rgba(255,255,255,.35)", fontSize: 11 }}>Team group chat</div>
                 </div>

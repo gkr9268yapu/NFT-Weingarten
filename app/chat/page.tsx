@@ -9,6 +9,12 @@ import {
 } from "@/lib/firebaseDB";
 import Navbar from "@/components/Navbar";
 import type { Conversation } from "@/lib/types";
+import PinAltIcon from "@/components/icons/PinAltIcon";
+import PinSlashAltIcon from "@/components/icons/PinSlashAltIcon";
+import BellSlashIcon from "@/components/icons/BellSlashIcon";
+import BellIcon from "@/components/icons/BellIcon";
+import CheckSquareIcon from "@/components/icons/CheckSquareIcon";
+import TrashAltIcon from "@/components/icons/TrashAltIcon";
 
 const MUTE_OPTIONS = [
   { label: "1 hour", ms: 1 * 60 * 60 * 1000 },
@@ -29,7 +35,7 @@ export default function ChatListPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedConvs, setSelectedConvs] = useState<Set<string>>(new Set());
   const [ctxConv, setCtxConv] = useState<{ id: string; name: string; x: number; y: number } | null>(null);
-  const [showMuteMenu, setShowMuteMenu] = useState<string | null>(null); // convId
+  const [showMuteMenu, setShowMuteMenu] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !currentUser) router.push("/");
@@ -38,7 +44,6 @@ export default function ChatListPage() {
   useEffect(() => {
     if (!currentUser) return;
     const unsub = listenConversations(currentUser.id, convs => {
-      // Only show conversations that have at least one message (ghost thread fix)
       setConversations(convs.filter(c => c.lastMessage !== "" || c.lastTimestamp > 0));
     });
     return () => unsub();
@@ -52,7 +57,9 @@ export default function ChatListPage() {
   }, [ctxConv]);
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
+    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }} />
+    </div>
   );
   if (!currentUser) return null;
 
@@ -71,7 +78,6 @@ export default function ChatListPage() {
   };
 
   const getUnread = (conv: Conversation) => conv.unread?.[currentUser.id] ?? 0;
-
   const totalUnread = conversations.reduce((s, c) => s + getUnread(c), 0);
 
   const sortedConvs = [...conversations].sort((a, b) => {
@@ -129,8 +135,8 @@ export default function ChatListPage() {
               <span style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 28, fontWeight: 900 }}>{selectedConvs.size} selected</span>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={handleBulkDelete}
-                  style={{ background: "rgba(255,82,82,.1)", border: "1px solid rgba(255,82,82,.2)", color: "#ff5252", padding: "9px 16px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                  🗑 Delete
+                  style={{ background: "rgba(255,82,82,.1)", border: "1px solid rgba(255,82,82,.2)", color: "#ff5252", padding: "9px 16px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  <TrashAltIcon width={15} height={15} /> Delete
                 </button>
                 <button onClick={() => { setSelectMode(false); setSelectedConvs(new Set()); }}
                   style={{ background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", color: "#fff", padding: "9px 16px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
@@ -183,7 +189,8 @@ export default function ChatListPage() {
             style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 16, cursor: "pointer", textAlign: "left", marginBottom: 6 }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.06)")}
             onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,.03)")}>
-            <img src="/logo.png" alt="NFT Weingarten" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />            <div style={{ flex: 1, minWidth: 0 }}>
+            <img src="/logo.png" alt="NFT Weingarten" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "'Barlow Condensed',sans-serif", letterSpacing: .5 }}>NFT Weingarten</div>
               <div style={{ color: "rgba(255,255,255,.4)", fontSize: 13 }}>Team group chat</div>
             </div>
@@ -249,8 +256,8 @@ export default function ChatListPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{name}</span>
-                      {isPinned && <span style={{ fontSize: 11 }}>📌</span>}
-                      {isMuted && <span style={{ fontSize: 11 }}>🔇</span>}
+                      {isPinned && <PinAltIcon width={12} height={12} style={{ color: "#00e676" }} />}
+                      {isMuted && <BellSlashIcon width={12} height={12} style={{ color: "rgba(255,255,255,.4)" }} />}
                     </div>
                     <div style={{ color: "rgba(255,255,255,.38)", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {conv.lastMessage || "Start chatting…"}
@@ -263,7 +270,7 @@ export default function ChatListPage() {
                       <span style={{ background: "#00e676", color: "#070d1a", borderRadius: "50%", width: 20, height: 20, fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{unread}</span>
                     )}
                     {isMuted && (
-                      <span style={{ color: "rgba(255,255,255,.2)", fontSize: 11 }}>🔇</span>
+                      <BellSlashIcon width={14} height={14} style={{ color: "rgba(255,255,255,.2)" }} />
                     )}
                   </div>
                 </button>
@@ -274,7 +281,6 @@ export default function ChatListPage() {
 
         {sortedConvs.length === 0 && !showUsers && (
           <div style={{ textAlign: "center", padding: "40px 20px", color: "rgba(255,255,255,.2)" }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>💬</div>
             <p style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 18 }}>Tap + to start a private chat</p>
           </div>
         )}
@@ -290,15 +296,16 @@ export default function ChatListPage() {
         return (
           <div onClick={e => e.stopPropagation()} style={{ position: "fixed", left: x, top: y, background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 16, zIndex: 600, minWidth: 200, overflow: "hidden", boxShadow: "0 12px 40px rgba(0,0,0,.7)" }}>
             {[
-              { label: isPinned ? "📌 Unpin" : "📌 Pin", action: "pin" },
-              { label: isMuted ? "🔔 Unmute" : "🔇 Mute", action: isMuted ? "unmute" : "mute" },
-              { label: "☑️ Select", action: "select" },
-              { label: "🗑️ Delete", action: "delete", red: true },
+              { label: isPinned ? "Unpin" : "Pin", Icon: isPinned ? PinSlashAltIcon : PinAltIcon, action: "pin", red: false },
+              { label: isMuted ? "Unmute" : "Mute", Icon: isMuted ? BellIcon : BellSlashIcon, action: isMuted ? "unmute" : "mute", red: false },
+              { label: "Select", Icon: CheckSquareIcon, action: "select", red: false },
+              { label: "Delete", Icon: TrashAltIcon, action: "delete", red: true },
             ].map(item => (
               <button key={item.action} onClick={() => handleCtxAction(item.action)}
-                style={{ width: "100%", padding: "12px 16px", background: "transparent", border: "none", color: item.red ? "#ff5252" : "#fff", fontSize: 14, textAlign: "left", cursor: "pointer", display: "block" }}
+                style={{ width: "100%", padding: "12px 16px", background: "transparent", border: "none", color: item.red ? "#ff5252" : "#fff", fontSize: 14, textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
                 onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <item.Icon width={18} height={18} />
                 {item.label}
               </button>
             ))}
@@ -310,8 +317,9 @@ export default function ChatListPage() {
       {showMuteMenu && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 20, overflow: "hidden", minWidth: 260, boxShadow: "0 20px 60px rgba(0,0,0,.8)" }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
-              <div style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, fontWeight: 800 }}>🔇 Mute notifications</div>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", gap: 10 }}>
+              <BellSlashIcon width={20} height={20} style={{ color: "#fff" }} />
+              <div style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, fontWeight: 800 }}>Mute notifications</div>
             </div>
             {MUTE_OPTIONS.map(opt => (
               <button key={opt.label} onClick={() => handleMute(showMuteMenu, opt.ms)}

@@ -60,7 +60,9 @@ export default function PrivateChatPage() {
     }, []);
 
     if (loading) return (
-        <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
+        <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
+        </div>
     );
     if (!currentUser) return null;
 

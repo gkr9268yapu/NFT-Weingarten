@@ -32,8 +32,9 @@ export default function HomePage() {
   }, [loading, currentUser, router]);
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
-  );
+    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
+    </div>  );
   if (!currentUser) return null;
 
   const today = new Date().toISOString().split("T")[0];
@@ -116,8 +117,7 @@ export default function HomePage() {
         <div className="fade-in">
           {activeMatches.length === 0 ? (
             <div style={{ textAlign: "center", padding: "100px 0", color: "rgba(255,255,255,.2)" }}>
-              <div style={{ fontSize: 60, marginBottom: 16 }}>⚽</div>
-              <p style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, letterSpacing: 1 }}>No upcoming matches</p>
+              <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", marginBottom: 16 }} />              <p style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, letterSpacing: 1 }}>No upcoming matches</p>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(360px,1fr))", gap: 28 }}>

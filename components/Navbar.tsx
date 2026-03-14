@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import { logOut } from "@/lib/firebaseAuth";
+import HomeIcon from "./icons/HomeIcon";
+import ImageAltIcon from "./icons/ImageAltIcon";
+import MessageCircleIcon from "./icons/MessageCircleIcon";
 
 const LINKS = [
-  { href: "/home", icon: "🏠", label: "Home" },
-  { href: "/media", icon: "📷", label: "Media" },
-  { href: "/chat", icon: "💬", label: "Chat" },
+  { href: "/home", Icon: HomeIcon, label: "Home" },
+  { href: "/media", Icon: ImageAltIcon, label: "Media" },
+  { href: "/chat", Icon: MessageCircleIcon, label: "Chat" },
 ] as const;
 
 export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?: number }) {
@@ -146,7 +149,7 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
         </div>
 
         <div style={{ display: "flex", gap: 4 }}>
-          {LINKS.map(({ href, icon, label }) => {
+          {LINKS.map(({ href, Icon, label }) => {
             const active = pathname === href;
             const showBadge = href === "/chat" && totalUnread > 0;
             return (
@@ -158,7 +161,7 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
                 fontSize: 15, letterSpacing: .5, textTransform: "uppercase",
                 display: "flex", alignItems: "center", gap: 6, position: "relative",
               }}>
-                {icon} {label}
+                <Icon width={18} height={18} /> {label}
                 {showBadge && (
                   <span style={{ background: "#ff5252", color: "#fff", borderRadius: "50%", minWidth: 18, height: 18, fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", position: "absolute", top: 2, right: 2 }}>
                     {totalUnread > 99 ? "99+" : totalUnread}
@@ -192,12 +195,12 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
 
         {/* Nav links in topbar */}
         <div className="mob-links">
-          {LINKS.map(({ href, icon, label }) => {
+          {LINKS.map(({ href, Icon, label }) => {
             const active = pathname === href;
             const showBadge = href === "/chat" && totalUnread > 0;
             return (
               <Link key={href} href={href} className="mob-link" data-active={active} style={{ position: "relative" }}>
-                <span className="mob-link-icon">{icon}</span>
+                <Icon width={20} height={20} style={{ color: active ? "#00e676" : "rgba(255,255,255,.5)" }} />
                 <span className="mob-link-label" data-active={active}>{label}</span>
                 {showBadge && (
                   <span style={{ position: "absolute", top: 0, right: 4, background: "#ff5252", color: "#fff", borderRadius: "50%", minWidth: 14, height: 14, fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" }}>

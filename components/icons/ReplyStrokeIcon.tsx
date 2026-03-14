@@ -1,0 +1,7 @@
+import React from "react";
+const ReplyStrokeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill="currentColor" viewBox="0 0 24 24" {...props}>
+    <path d="M9.16 12.25 6.63 10H15c2.21 0 4 1.79 4 4v6h2v-6c0-3.31-2.69-6-6-6H6.63l2.53-2.25-1.33-1.49-5.34 4.75 5.34 4.75 1.33-1.49Z"></path>
+  </svg>
+);
+export default ReplyStrokeIcon;

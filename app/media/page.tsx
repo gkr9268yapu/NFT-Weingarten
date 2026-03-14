@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import Navbar from "@/components/Navbar";
 import type { MediaItem } from "@/lib/types";
+import CheckSquareIcon from "@/components/icons/CheckSquareIcon";
 
 export default function MediaPage() {
   const { currentUser, mediaItems, loading } = useApp();
@@ -20,6 +21,7 @@ export default function MediaPage() {
   const [downloading, setDownloading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
 
   const handleDriveSync = async () => {
     setSyncing(true);
@@ -36,8 +38,9 @@ export default function MediaPage() {
   const canDeleteSelected = isHost || (mySelected.length === selectedItems.length && selectedItems.length > 0 && othersSelected.length === 0);
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>⚽</div>
-  );
+    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
+    </div>  );
   if (!currentUser) { router.push("/"); return null; }
 
   const uploadOne = async (file: File) => {
@@ -198,8 +201,8 @@ export default function MediaPage() {
                 )}
                 {mediaItems.length > 0 && (
                   <button onClick={() => setSelectMode(true)}
-                    style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)", color: "#fff", padding: "12px 18px", borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                    ☑ Select
+                    style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)", color: "#fff", padding: "12px 18px", borderRadius: 12, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                    <CheckSquareIcon width={16} height={16} /> Select
                   </button>
                 )}
                 <button onClick={() => fileRef.current?.click()} disabled={uploading}
@@ -226,12 +229,8 @@ export default function MediaPage() {
                     {downloading ? (isMobile ? "Creating zip…" : "Downloading…") : "⬇ Download"}
                   </button>
                 )}
-                {canDeleteSelected && (
-                  <button onClick={async () => {
-                    if (!confirm(`Delete ${selected.size} image${selected.size > 1 ? "s" : ""}?`)) return;
-                    for (const item of selectedItems) await handleDelete(item);
-                    cancelSelect();
-                  }}
+                  {canDeleteSelected && (
+                    <button onClick={() => setBulkDeleteModal(true)}
                     style={{ background: "rgba(255,82,82,.1)", border: "1px solid rgba(255,82,82,.2)", color: "#ff5252", padding: "10px 16px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                     🗑 Delete
                   </button>
@@ -399,6 +398,46 @@ export default function MediaPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk delete modal */}
+      {bulkDeleteModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 20, padding: 28, width: "100%", maxWidth: 340, boxShadow: "0 20px 60px rgba(0,0,0,.8)" }}>
+            <div style={{ fontSize: 36, textAlign: "center", marginBottom: 16 }}>🗑️</div>
+            <h3 style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, fontWeight: 900, textAlign: "center", marginBottom: 8 }}>
+              Delete {selected.size} image{selected.size > 1 ? "s" : ""}?
+            </h3>
+            <p style={{ color: "rgba(255,255,255,.4)", fontSize: 14, textAlign: "center", marginBottom: 24 }}>
+              This will permanently delete {selected.size > 1 ? "these images" : "this image"} from Google Drive and cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setBulkDeleteModal(false)}
+                style={{ flex: 1, padding: "13px", borderRadius: 12, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.05)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                Cancel
+              </button>
+              <button onClick={async () => {
+                setBulkDeleteModal(false);
+                for (const item of selectedItems) {
+                  setDeleting(item.id);
+                  try {
+                    await fetch("/api/delete-media", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ docId: item.id, driveFileId: item.driveFileId }),
+                    });
+                  } catch (err) { console.error(err); }
+                }
+                setDeleting(null);
+                cancelSelect();
+              }}
+                style={{ flex: 1, padding: "13px", borderRadius: 12, border: "1px solid rgba(255,82,82,.3)", background: "rgba(255,82,82,.15)", color: "#ff5252", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

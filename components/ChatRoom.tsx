@@ -2,6 +2,15 @@
 import { useState, useRef, useEffect } from "react";
 import type { Message, User, ReplyTo, PollOption } from "@/lib/types";
 import PollModal from "./PollModal";
+import ArrowToBottomIcon from "./icons/ArrowToBottomIcon";
+import ReplyStrokeIcon from "./icons/ReplyStrokeIcon";
+import PollIcon from "./icons/PollIcon";
+import FileDetailIcon from "./icons/FileDetailIcon";
+import ImagesIcon from "./icons/ImagesIcon";
+import CheckSquareIcon from "./icons/CheckSquareIcon";
+import TrashAltIcon from "./icons/TrashAltIcon";
+import PinAltIcon from "./icons/PinAltIcon";
+import PinSlashAltIcon from "./icons/PinSlashAltIcon";
 
 const EMOJIS = ["❤️", "😂", "👍", "🔥", "😮", "😢"] as const;
 
@@ -223,7 +232,7 @@ export default function ChatRoom({
                 return (
                     <div onClick={() => { scrollToMsg(pm.id); setPinnedIdx(i => (i + 1) % pinned.length); }}
                         style={{ flexShrink: 0, background: "rgba(0,230,118,.06)", borderBottom: "1px solid rgba(0,230,118,.12)", padding: "8px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                        <span style={{ fontSize: 16, flexShrink: 0 }}>📌</span>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}><PinAltIcon width={16} height={16} style={{ color: "#00e676" }} /></span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ color: "#00e676", fontSize: 11, fontWeight: 700, marginBottom: 1 }}>
                                 Pinned message {pinned.length > 1 ? `${idx + 1}/${pinned.length}` : ""}
@@ -406,7 +415,7 @@ export default function ChatRoom({
                                     {!selectMode && !isDeleted && (
                                         <button className="hover-reply" onClick={e => { e.stopPropagation(); setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type }); setTimeout(() => inputRef.current?.focus(), 50); }}
                                             style={{ opacity: 0, background: "rgba(255,255,255,.07)", border: "none", color: "rgba(255,255,255,.5)", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "opacity 0.15s", alignSelf: "center" }}>
-                                            ↩
+                                            <ReplyStrokeIcon width={16} height={16} />
                                         </button>
                                     )}
                                 </div>
@@ -438,9 +447,9 @@ export default function ChatRoom({
             {showPlus && (
                 <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 70, left: 12, background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 16, overflow: "hidden", boxShadow: "0 -8px 30px rgba(0,0,0,.6)", zIndex: 400, minWidth: 180 }}>
                     {[
-                        { icon: "🖼️", label: "Image", action: "image" },
-                        { icon: "📄", label: "Document", action: "doc" },
-                        { icon: "📊", label: "Poll", action: "poll" },
+                        { Icon: ImagesIcon, label: "Image", action: "image" },
+                        { Icon: FileDetailIcon, label: "Document", action: "doc" },
+                        { Icon: PollIcon, label: "Poll", action: "poll" },
                     ].map(item => (
                         <button key={item.action}
                             onClick={() => {
@@ -452,7 +461,7 @@ export default function ChatRoom({
                             style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 18px", background: "none", border: "none", color: "#fff", fontSize: 14, cursor: "pointer", textAlign: "left" }}
                             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "none")}>
-                            <span style={{ fontSize: 22 }}>{item.icon}</span>
+                            <item.Icon width={22} height={22} style={{ color: "#00e676" }} />
                             <span>{item.label}</span>
                         </button>
                     ))}
@@ -512,17 +521,18 @@ export default function ChatRoom({
                             </div>
                         )}
                         {([
-                            !isDeleted && { label: "↩️  Reply", action: "reply", red: false },
-                            !isDeleted && msg.type === "text" && { label: "📋  Copy", action: "copy", red: false },
-                            !isDeleted && isFile && { label: "⬇️  Download", action: "download", red: false },
-                            !isDeleted && { label: msg.pinned ? "📌  Unpin" : "📌  Pin", action: "pin", red: false },
-                            { label: "☑️  Select", action: "select", red: false },
-                            (isOwn || currentUser.role === "host") && !isDeleted && { label: "🗑️  Delete", action: "delete", red: true },
-                        ].filter(Boolean) as { label: string; action: string; red: boolean }[]).map(item => (
+                            !isDeleted && { label: "Reply", Icon: ReplyStrokeIcon, action: "reply", red: false },
+                            !isDeleted && msg.type === "text" && { label: "Copy", Icon: null, action: "copy", red: false },
+                            !isDeleted && isFile && { label: "Download", Icon: ArrowToBottomIcon, action: "download", red: false },
+                            !isDeleted && { label: msg.pinned ? "Unpin" : "Pin", Icon: msg.pinned ? PinSlashAltIcon : PinAltIcon, action: "pin", red: false },
+                            { label: "Select", Icon: CheckSquareIcon, action: "select", red: false },
+                            (isOwn || currentUser.role === "host") && !isDeleted && { label: "Delete", Icon: TrashAltIcon, action: "delete", red: true },
+                        ].filter(Boolean) as { label: string; Icon: any; action: string; red: boolean }[]).map(item => (
                             <button key={item.action} onClick={() => handleCtxAction(item.action)}
-                                style={{ width: "100%", padding: "11px 16px", background: "transparent", border: "none", color: item.red ? "#ff5252" : "#fff", fontSize: 14, textAlign: "left", cursor: "pointer", display: "block" }}
+                                style={{ width: "100%", padding: "11px 16px", background: "transparent", border: "none", color: item.red ? "#ff5252" : "#fff", fontSize: 14, textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
                                 onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")}
                                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                                {item.Icon && <item.Icon width={16} height={16} />}
                                 {item.label}
                             </button>
                         ))}
@@ -539,12 +549,12 @@ export default function ChatRoom({
                             {deleteModal.isOwn && (
                                 <button onClick={async () => { await onDeleteForEveryone(deleteModal.msgId); setDeleteModal(null); }}
                                     style={{ padding: "12px", borderRadius: 10, border: "1px solid rgba(255,82,82,.3)", background: "rgba(255,82,82,.1)", color: "#ff5252", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                                    🗑️ Delete for everyone
+                                    Delete for everyone
                                 </button>
                             )}
                             <button onClick={async () => { await onDeleteForMe(deleteModal.msgId); setDeleteModal(null); }}
                                 style={{ padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.05)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                                🙈 Delete for me
+                                Delete for me
                             </button>
                             <button onClick={() => setDeleteModal(null)}
                                 style={{ padding: "12px", borderRadius: 10, border: "none", background: "transparent", color: "rgba(255,255,255,.35)", fontSize: 14, cursor: "pointer" }}>
@@ -564,12 +574,12 @@ export default function ChatRoom({
                             {allOwn && (
                                 <button onClick={() => handleBulkDelete(true)}
                                     style={{ padding: "12px", borderRadius: 10, border: "1px solid rgba(255,82,82,.3)", background: "rgba(255,82,82,.1)", color: "#ff5252", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                                    🗑️ Delete for everyone
+                                    Delete for everyone
                                 </button>
                             )}
                             <button onClick={() => handleBulkDelete(false)}
                                 style={{ padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.05)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                                🙈 Delete for me
+                                Delete for me
                             </button>
                             <button onClick={() => setBulkDelete(false)}
                                 style={{ padding: "12px", borderRadius: 10, border: "none", background: "transparent", color: "rgba(255,255,255,.35)", fontSize: 14, cursor: "pointer" }}>

@@ -23,17 +23,30 @@ export async function POST(req: NextRequest) {
       ? process.env.GOOGLE_CHAT_FOLDER_ID!
       : process.env.GOOGLE_DRIVE_FOLDER_ID!;
 
-    const driveRes = await drive.files.create({
-      requestBody: {
-        name: file.name,
-        parents: [folderId],
-      },
-      media: {
-        mimeType: file.type || "application/octet-stream",
-        body: Readable.from(buffer),
-      },
-      fields: "id, name",
-    });
+    let driveRes;
+    let retries = 0;
+    while (retries < 3) {
+      try {
+        const freshDrive = await getDriveClient();
+        driveRes = await freshDrive.files.create({
+          requestBody: {
+            name: file.name,
+            parents: [folderId],
+          },
+          media: {
+            mimeType: file.type || "application/octet-stream",
+            body: Readable.from(buffer),
+          },
+          fields: "id, name",
+        });
+        break;
+      } catch (err: unknown) {
+        retries++;
+        if (retries >= 3) throw err;
+        await new Promise(res => setTimeout(res, 1000 * retries));
+      }
+    }
+    if (!driveRes) throw new Error("Upload failed after retries");
 
     const fileId = driveRes.data.id!;
     const fileName = driveRes.data.name!;
