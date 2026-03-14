@@ -271,18 +271,18 @@ export default function ChatRoom({
                                     ref={el => { if (el) msgRefs.current[msg.id] = el; }}
                                     className="msg-bubble"
                                     style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, marginBottom: 3, alignItems: "flex-end", position: "relative", background: isSelected ? "rgba(0,230,118,.05)" : "transparent", borderRadius: 10, padding: "1px 2px", cursor: selectMode ? "pointer" : "default", transition: "background .4s" }}
-                                    onTouchStart={e => {
-                                        e.preventDefault();
-                                        touchStartX.current = e.touches[0].clientX;
-                                        touchStartY.current = e.touches[0].clientY;
-                                        swipedRef.current = false;
-                                        const timer = setTimeout(() => {
-                                            if (navigator.vibrate) navigator.vibrate(40);
-                                            if (selectMode) { toggleSelect(msg.id); return; }
-                                            openCtx(msg.id, window.innerWidth / 2, window.innerHeight / 2);
-                                        }, 500);
-                                        (e.currentTarget as HTMLElement).dataset.timer = String(timer);
-                                    }}
+                                onTouchStart={e => {
+                                    if (selectMode) return; // allow normal touch in select mode
+                                    e.preventDefault();
+                                    touchStartX.current = e.touches[0].clientX;
+                                    touchStartY.current = e.touches[0].clientY;
+                                    swipedRef.current = false;
+                                    const timer = setTimeout(() => {
+                                        if (navigator.vibrate) navigator.vibrate(40);
+                                        openCtx(msg.id, window.innerWidth / 2, window.innerHeight / 2);
+                                    }, 500);
+                                    (e.currentTarget as HTMLElement).dataset.timer = String(timer);
+                                }}
                                     onTouchMove={e => {
                                         const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
                                         const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
@@ -299,10 +299,14 @@ export default function ChatRoom({
                                             }
                                         }
                                     }}
-                                    onTouchEnd={e => {
-                                        clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
-                                        if (selectMode) toggleSelect(msg.id);
-                                    }}
+                                onTouchEnd={e => {
+                                    clearTimeout(Number((e.currentTarget as HTMLElement).dataset.timer));
+                                    if (selectMode) {
+                                        e.stopPropagation();
+                                        toggleSelect(msg.id);
+                                        return;
+                                    }
+                                }}
                                     onContextMenu={e => { e.preventDefault(); if (selectMode) { toggleSelect(msg.id); return; } openCtx(msg.id, e.clientX, e.clientY); }}
                                     onDoubleClick={() => { if (!isDeleted && !selectMode) { setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type }); setTimeout(() => inputRef.current?.focus(), 50); } }}
                                     onClick={() => {}}
