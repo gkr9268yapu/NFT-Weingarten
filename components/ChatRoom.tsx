@@ -163,6 +163,9 @@ export default function ChatRoom({
     const selectedMsgs = messages.filter(m => selected.has(m.id));
     const allOwn = selectedMsgs.every(m => m.userId === currentUser.id);
     const hasFiles = selectedMsgs.some(m => m.type === "image" || m.type === "document");
+    const hasText = selectedMsgs.some(m => m.type === "text");
+    const onlyFiles = hasFiles && !hasText;
+    const onlyOwnFiles = onlyFiles && allOwn;
 
     const handleBulkCopy = () => {
         navigator.clipboard.writeText(selectedMsgs.map(m => `${m.user}: ${m.text}`).join("\n")).catch(() => { });
@@ -217,8 +220,8 @@ export default function ChatRoom({
                 <div style={{ flexShrink: 0, height: 48, background: "#0e1828", borderBottom: "1px solid rgba(255,255,255,.1)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12 }}>
                     <button onClick={cancelSelect} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer" }}>✕</button>
                     <span style={{ flex: 1, color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, fontWeight: 700 }}>{selected.size} selected</span>
-                    <button onClick={handleBulkCopy} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Copy</button>
-                    {hasFiles && <button onClick={handleBulkDownload} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Download</button>}
+                    {!hasFiles && <button onClick={handleBulkCopy} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Copy</button>}
+                    {onlyFiles && !onlyOwnFiles && <button onClick={handleBulkDownload} style={{ background: "none", border: "none", color: "#00e676", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Download</button>}
                     <button onClick={() => setBulkDelete(true)} style={{ background: "none", border: "none", color: "#ff5252", fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 10px" }}>Delete</button>
                 </div>
             )}
@@ -302,7 +305,7 @@ export default function ChatRoom({
                                     }}
                                     onContextMenu={e => { e.preventDefault(); if (selectMode) { toggleSelect(msg.id); return; } openCtx(msg.id, e.clientX, e.clientY); }}
                                     onDoubleClick={() => { if (!isDeleted && !selectMode) { setReplyTo({ id: msg.id, user: msg.user, text: msg.text, type: msg.type }); setTimeout(() => inputRef.current?.focus(), 50); } }}
-                                    onClick={() => { if (selectMode) toggleSelect(msg.id); }}
+                                    onClick={() => {}}
                                 >
                                     {selectMode && (
                                         <div style={{ display: "flex", alignItems: "center", paddingBottom: 6 }}>
