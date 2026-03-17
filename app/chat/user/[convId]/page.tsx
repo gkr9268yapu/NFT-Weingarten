@@ -84,15 +84,22 @@ export default function PrivateChatPage() {
         return data;
     };
 
-    const currentOtherId = () => conv?.participants.find(p => p !== currentUser.id) ?? "";
+    const currentOtherId = () => {
+        if (conv) return conv.participants.find(p => p !== currentUser.id) ?? "";
+        if (convId.startsWith(currentUser.id + "_")) return convId.slice(currentUser.id.length + 1);
+        if (convId.endsWith("_" + currentUser.id)) return convId.slice(0, convId.length - currentUser.id.length - 1);
+        return "";
+    };
     const currentOtherName = () => conv?.participantNames[currentOtherId()] ?? otherName;
 
     const handleSendText = async (text: string, replyTo?: ReplyTo) => {
-        await sendPrivateMessage(convId, currentUser.id, currentUser.name, text, currentOtherId(), replyTo, currentOtherName());
-        // Push notification
+        const otherId = currentOtherId();
+        if (!otherId) return;
+        await sendPrivateMessage(convId, currentUser.id, currentUser.name, text, otherId, replyTo, currentOtherName());
         const { sendPushToUser } = await import("@/lib/notifications");
-        await sendPushToUser(currentOtherId(), currentUser.name, text, `/chat/user/${convId}`).catch(() => { });
+        await sendPushToUser(otherId, currentUser.name, text, `/chat/user/${convId}`).catch(() => { });
     };
+
 
     const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
