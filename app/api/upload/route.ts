@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const drive = await getDriveClient();
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(new Uint8Array(arrayBuffer));    const drive = await getDriveClient();
     try { await drive.files.list({ pageSize: 1, fields: "files(id)" }); } catch { }
 
     // Use separate folder for chat files vs media files
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
           },
           media: {
             mimeType: file.type || "application/octet-stream",
-            body: Readable.from(Buffer.from(buffer)),
+            body: Readable.from(buffer),
           },
           fields: "id, name",
         });
