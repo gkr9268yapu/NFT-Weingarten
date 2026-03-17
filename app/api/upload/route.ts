@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
     while (retries < 3) {
       try {
         const freshDrive = await getDriveClient();
+        // Create a fresh Readable stream for each attempt
+        const freshBuffer = Buffer.from(new Uint8Array(arrayBuffer));
         driveRes = await freshDrive.files.create({
           requestBody: {
             name: file.name,
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
           },
           media: {
             mimeType: file.type || "application/octet-stream",
-            body: Readable.from(buffer),
+            body: Readable.from(freshBuffer),
           },
           fields: "id, name",
         });
