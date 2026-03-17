@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(new Uint8Array(arrayBuffer));    const drive = await getDriveClient();
+    const uint8Array = new Uint8Array(arrayBuffer.slice(0));
+    const buffer = Buffer.from(uint8Array);   const drive = await getDriveClient();
     try { await drive.files.list({ pageSize: 1, fields: "files(id)" }); } catch { }
 
     // Use separate folder for chat files vs media files
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
       try {
         const freshDrive = await getDriveClient();
         // Create a fresh Readable stream for each attempt
-        const freshBuffer = Buffer.from(new Uint8Array(arrayBuffer));
+        const freshBuffer = Buffer.from(uint8Array.slice(0));
         driveRes = await freshDrive.files.create({
           requestBody: {
             name: file.name,
