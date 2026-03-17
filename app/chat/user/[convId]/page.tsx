@@ -97,32 +97,34 @@ export default function PrivateChatPage() {
         if (!otherId) return;
         await sendPrivateMessage(convId, currentUser.id, currentUser.name, text, otherId, replyTo, currentOtherName());
         const { sendPushToUser } = await import("@/lib/notifications");
-        await sendPushToUser(otherId, currentUser.name, text, `/chat/user/${convId}`).catch(() => { });
+        await sendPushToUser(otherId, currentUser.name, "Sent you a message", `/chat/user/${convId}`).catch(() => { });
     };
-
 
     const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
         if (data.url) {
-            await sendPrivateImageMessage(convId, currentUser.id, currentUser.name, data.url, currentOtherId(), replyTo, data.driveFileId);
+            const otherId = currentOtherId();
+            await sendPrivateImageMessage(convId, currentUser.id, currentUser.name, data.url, otherId, replyTo, data.driveFileId);
             const { sendPushToUser } = await import("@/lib/notifications");
-            await sendPushToUser(currentOtherId(), currentUser.name, "📷 Sent an image", `/chat/user/${convId}`).catch(() => { });
+            await sendPushToUser(otherId, currentUser.name, "Sent you an image", `/chat/user/${convId}`).catch(() => { });
         }
     };
 
     const handleSendDocument = async (file: File, replyTo?: ReplyTo) => {
         const data = await upload(file);
         if (data.url) {
-            await sendPrivateDocumentMessage(convId, currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", currentOtherId(), replyTo, data.driveFileId);
+            const otherId = currentOtherId();
+            await sendPrivateDocumentMessage(convId, currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", otherId, replyTo, data.driveFileId);
             const { sendPushToUser } = await import("@/lib/notifications");
-            await sendPushToUser(currentOtherId(), currentUser.name, `📄 ${file.name}`, `/chat/user/${convId}`).catch(() => { });
+            await sendPushToUser(otherId, currentUser.name, "Sent you a document", `/chat/user/${convId}`).catch(() => { });
         }
     };
 
     const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) => {
-        await sendPrivatePollMessage(convId, currentUser.id, currentUser.name, question, options, multiChoice, currentOtherId());
+        const otherId = currentOtherId();
+        await sendPrivatePollMessage(convId, currentUser.id, currentUser.name, question, options, multiChoice, otherId);
         const { sendPushToUser } = await import("@/lib/notifications");
-        await sendPushToUser(currentOtherId(), currentUser.name, `📊 ${question}`, `/chat/user/${convId}`).catch(() => { });
+        await sendPushToUser(otherId, currentUser.name, "Sent you a poll", `/chat/user/${convId}`).catch(() => { });
     };
 
     const handleVote = async (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) =>

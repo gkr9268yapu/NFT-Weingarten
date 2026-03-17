@@ -57,7 +57,7 @@ export default function TeamChatPage() {
     const handleSendText = async (text: string, replyTo?: ReplyTo) => {
         await sendMessage(currentUser.id, currentUser.name, text, replyTo);
         const { sendPushToAll } = await import("@/lib/notifications");
-        await sendPushToAll(currentUser.id, currentUser.name, text, "/chat/room").catch(() => { });
+        await sendPushToAll(currentUser.id, `${currentUser.name}`, "New message in team chat", "/chat/room").catch(() => { });
     };
 
     const handleSendImage = async (file: File, replyTo?: ReplyTo) => {
@@ -65,7 +65,7 @@ export default function TeamChatPage() {
         if (data.url) {
             await sendImageMessage(currentUser.id, currentUser.name, data.url, replyTo, data.driveFileId);
             const { sendPushToAll } = await import("@/lib/notifications");
-            await sendPushToAll(currentUser.id, currentUser.name, "📷 Sent an image", "/chat/room").catch(() => { });
+            await sendPushToAll(currentUser.id, `${currentUser.name}`, "Sent an image in team chat", "/chat/room").catch(() => { });
         }
     };
 
@@ -74,14 +74,14 @@ export default function TeamChatPage() {
         if (data.url) {
             await sendDocumentMessage(currentUser.id, currentUser.name, data.url, file.name, data.fileSize ?? "", replyTo, "messages", data.driveFileId);
             const { sendPushToAll } = await import("@/lib/notifications");
-            await sendPushToAll(currentUser.id, currentUser.name, `📄 ${file.name}`, "/chat/room").catch(() => { });
+            await sendPushToAll(currentUser.id, `${currentUser.name}`, "Sent a document in team chat", "/chat/room").catch(() => { });
         }
     };
 
     const handleSendPoll = async (question: string, options: string[], multiChoice: boolean) => {
         await sendPollMessage(currentUser.id, currentUser.name, question, options, multiChoice);
         const { sendPushToAll } = await import("@/lib/notifications");
-        await sendPushToAll(currentUser.id, currentUser.name, `📊 ${question}`, "/chat/room").catch(() => { });
+        await sendPushToAll(currentUser.id, `${currentUser.name}`, "Created a poll in team chat", "/chat/room").catch(() => { });
     };
 
     const handleVote = async (msgId: string, optionId: string, multiChoice: boolean, currentOptions: PollOption[]) =>
