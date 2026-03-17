@@ -17,14 +17,22 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(payload => {
+  // Only show notification if app is not focused
   const { title, body } = payload.notification ?? {};
-  self.registration.showNotification(title ?? "NFT Weingarten", {
-    body:  body  ?? "New message",
-    icon:  "/logo.png",
-    badge: "/logo.png",
-    data:  payload.data,
-    vibrate: [200, 100, 200],
-  });
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      const focused = clientList.some(c => c.focused);
+      if (!focused) {
+        self.registration.showNotification(title ?? "NFT Weingarten", {
+          body:  body  ?? "New message",
+          icon:  "/logo.png",
+          badge: "/logo.png",
+          data:  payload.data,
+          vibrate: [200, 100, 200],
+        });
+      }
+    })
+  );
 });
 
 self.addEventListener("notificationclick", e => {
