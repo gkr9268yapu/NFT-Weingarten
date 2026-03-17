@@ -62,6 +62,7 @@ export default function MediaPage() {
       for (let i = 0; i < files.length; i++) {
         await uploadOne(files[i]);
         setUploadProgress({ done: i + 1, total: files.length });
+        if (i < files.length - 1) await new Promise(res => setTimeout(res, 1500));
       }
     } catch (err: unknown) {
       setUploadErr(err instanceof Error ? err.message : "Upload failed");

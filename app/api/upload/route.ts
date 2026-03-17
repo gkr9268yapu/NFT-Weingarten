@@ -15,8 +15,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing file or uploader" }, { status: 400 });
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
     const drive = await getDriveClient();
+    try { await drive.files.list({ pageSize: 1, fields: "files(id)" }); } catch { }
 
     // Use separate folder for chat files vs media files
     const folderId = chatOnly === "true"
@@ -35,7 +40,7 @@ export async function POST(req: NextRequest) {
           },
           media: {
             mimeType: file.type || "application/octet-stream",
-            body: Readable.from(buffer),
+            body: Readable.from(Buffer.from(buffer)),
           },
           fields: "id, name",
         });
@@ -43,7 +48,7 @@ export async function POST(req: NextRequest) {
       } catch (err: unknown) {
         retries++;
         if (retries >= 3) throw err;
-        await new Promise(res => setTimeout(res, 1000 * retries));
+        await new Promise(res => setTimeout(res, 2000 * retries));
       }
     }
     if (!driveRes) throw new Error("Upload failed after retries");
