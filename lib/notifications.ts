@@ -37,19 +37,6 @@ export async function initPushNotifications(userId: string): Promise<void> {
         console.log("FCM token:", token ? "obtained" : "failed");
         if (token) await saveFCMToken(userId, token);
 
-        // Handle foreground messages
-        onMessage(messaging, payload => {
-            console.log("Foreground message received:", payload);
-            const { title, body } = payload.notification ?? {};
-            if (Notification.permission === "granted") {
-                new Notification(title ?? "NFT Weingarten", {
-                    body: body ?? "New message",
-                    icon: "/logo.png",
-                    badge: "/logo.png",
-                });
-            }
-        });
-
     } catch (err) {
         console.error("Push init error:", err);
     }
