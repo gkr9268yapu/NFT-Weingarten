@@ -7,6 +7,9 @@ service cloud.firestore {
       return isSignedIn() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "host";
     }
+    function isParticipant(convId) {
+      return request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+    }
 
     match /users/{uid} {
       allow read:   if true;
@@ -32,13 +35,13 @@ service cloud.firestore {
     match /conversations/{convId} {
       allow read:   if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow delete: if isSignedIn() && request.auth.uid in resource.data.participants;
       match /messages/{msgId} {
-        allow read:   if isSignedIn();
-        allow create: if isSignedIn();
-        allow update: if isSignedIn();
-        allow delete: if isSignedIn();
+        allow read:   if isSignedIn() && isParticipant(convId);
+        allow create: if isSignedIn() && isParticipant(convId);
+        allow update: if isSignedIn() && isParticipant(convId);
+        allow delete: if isSignedIn() && isParticipant(convId);
       }
     }
 
