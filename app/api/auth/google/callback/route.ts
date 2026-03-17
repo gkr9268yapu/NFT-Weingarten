@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOAuthClient, saveRefreshToken } from "@/lib/googleDrive";
+import { google } from "googleapis";
 
+function getOAuthClient() {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID!,
+    process.env.GOOGLE_CLIENT_SECRET!,
+    process.env.GOOGLE_REDIRECT_URI!
+  );
+}
+
+async function saveRefreshToken(token: string) {
+  console.log("Refresh token:", token);
+}
 // GET /api/auth/google/callback?code=...
 // Google redirects here after the host approves access
 export async function GET(req: NextRequest) {

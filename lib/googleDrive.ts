@@ -1,20 +1,21 @@
 import { google } from "googleapis";
 
 export async function getDriveClient() {
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL!;
+  const clientId = process.env.GOOGLE_CLIENT_ID!;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET!;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN!;
 
-  if (!privateKey || !clientEmail) {
-    throw new Error("Missing Firebase Admin credentials for Drive access");
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error(
+      "Missing Google credentials. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN to .env.local"
+    );
   }
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: clientEmail,
-      private_key: privateKey,
-    },
-    scopes: ["https://www.googleapis.com/auth/drive"],
-  });
+  const auth = new google.auth.OAuth2(clientId, clientSecret);
+  auth.setCredentials({ refresh_token: refreshToken });
+
+  // Force refresh access token before every request — prevents expiry errors
+  await auth.refreshAccessToken();
 
   return google.drive({ version: "v3", auth });
 }
