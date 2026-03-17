@@ -48,6 +48,7 @@ self.addEventListener("notificationclick", e => {
     headers: {
       "Content-Type": "application/javascript",
       "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Service-Worker-Allowed": "/",
     },
   });
 }
