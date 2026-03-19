@@ -6,10 +6,11 @@ import {
   onAuthStateChanged,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { isHostEmail } from "./hostEmails";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import type { Role, User } from "./types";
+
+import { isHostEmail } from "./hostEmails";
 
 /* ── Sign up ──────────────────────────────────────────────── */
 export async function signUp(
@@ -17,31 +18,40 @@ export async function signUp(
   email: string,
   password: string,
   role: Role,
+  position?: string,
 ): Promise<void> {
-  const assignedRole: Role = isHostEmail(email) ? "host" : "user"; // ← add this
-
+  const assignedRole: Role = isHostEmail(email) ? "host" : "user";
   const cred = await createUserWithEmailAndPassword(auth, email, password);
-
   await sendEmailVerification(cred.user);
-
   await setDoc(doc(db, "users", cred.user.uid), {
     id: cred.user.uid,
     name,
     email,
-    role: assignedRole,  // ← change from `role` to `role: assignedRole`
+    role: assignedRole,
     verified: false,
+    ...(assignedRole === "user" && position ? { position } : {}),
   } satisfies Omit<User, "password">);
 }
+
 /* ── Log in ───────────────────────────────────────────────── */
 export async function logIn(
   email: string,
-  password: string
+  password: string,
+  expectedRole?: Role
 ): Promise<User> {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const snap = await getDoc(doc(db, "users", cred.user.uid));
+
   if (!snap.exists()) throw new Error("User profile not found.");
+
   const profile = snap.data() as Omit<User, "password">;
-  return { ...profile, password: "" };
+
+  if (profile.role !== expectedRole) {
+    await signOut(auth);
+    throw new Error(`Wrong role selected. You are registered as "${profile.role}".`);
+  }
+
+  return { ...profile, password: "" };   // never expose password client-side
 }
 
 /* ── Log out ──────────────────────────────────────────────── */

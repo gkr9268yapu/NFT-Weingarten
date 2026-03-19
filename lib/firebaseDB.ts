@@ -472,6 +472,13 @@ export async function saveFCMToken(userId: string, token: string): Promise<void>
   await updateDoc(doc(db, "users", userId), { fcmToken: token });
 }
 
+export async function updateUserProfile(
+  userId: string,
+  data: { name?: string; position?: string }
+): Promise<void> {
+  await updateDoc(doc(db, "users", userId), data);
+}
+
 export async function deleteConversation(convId: string): Promise<void> {
   const msgsSnap = await getDocs(collection(db, "conversations", convId, "messages"));
   for (const msgDoc of msgsSnap.docs) {

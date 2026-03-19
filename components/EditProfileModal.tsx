@@ -1,0 +1,99 @@
+"use client";
+import { useState } from "react";
+import type { User } from "@/lib/types";
+
+const POSITIONS = [
+    "Goalkeeper", "Defender", "Midfielder", "Forward",
+    "Winger", "Striker", "Centre-Back", "Full-Back",
+    "Attacking Midfielder", "Defensive Midfielder",
+];
+
+interface Props {
+    currentUser: User;
+    onClose: () => void;
+    onSave: (name: string, position: string) => Promise<void>;
+}
+
+export default function EditProfileModal({ currentUser, onClose, onSave }: Props) {
+    const [name, setName] = useState(currentUser.name);
+    const [position, setPosition] = useState(currentUser.position ?? "");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleSave = async () => {
+        if (!name.trim()) { setError("Name is required."); return; }
+        setSaving(true);
+        try {
+            await onSave(name.trim(), position);
+            onClose();
+        } catch (e: unknown) {
+            setError((e as Error).message || "Failed to save.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", zIndex: 900, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+            <div style={{ background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 20, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,.8)" }}>
+
+                {/* Header */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                    <h2 style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 24, fontWeight: 900 }}>Edit Profile</h2>
+                    <button onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,.5)", fontSize: 22, cursor: "pointer" }}>✕</button>
+                </div>
+
+                {/* Avatar */}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+                    <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg,#00e676,#0070ff)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 28, color: "#070d1a" }}>
+                        {name[0]?.toUpperCase()}
+                    </div>
+                </div>
+
+                {/* Name */}
+                <div style={{ marginBottom: 16 }}>
+                    <label style={{ color: "rgba(255,255,255,.5)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 6 }}>Name</label>
+                    <input
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="Your name"
+                        style={{ width: "100%", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 10, padding: "11px 14px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+                    />
+                </div>
+
+                {/* Position — only for users not hosts */}
+                {currentUser.role === "user" && (
+                    <div style={{ marginBottom: 24 }}>
+                        <label style={{ color: "rgba(255,255,255,.5)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 6 }}>Position</label>
+                        <select
+                            value={position}
+                            onChange={e => setPosition(e.target.value)}
+                            style={{ width: "100%", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 10, padding: "11px 14px", color: "#fff", fontSize: 14, outline: "none", cursor: "pointer", appearance: "none" }}>
+                            <option value="" style={{ background: "#0e1828" }}>No position selected</option>
+                            {POSITIONS.map(p => (
+                                <option key={p} value={p} style={{ background: "#0e1828" }}>{p}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {error && (
+                    <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 16, background: "rgba(255,82,82,.1)", border: "1px solid rgba(255,82,82,.2)", color: "#ff5252", fontSize: 13 }}>
+                        {error}
+                    </div>
+                )}
+
+                <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={onClose}
+                        style={{ flex: 1, padding: "13px", borderRadius: 12, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.05)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                        Cancel
+                    </button>
+                    <button onClick={handleSave} disabled={saving}
+                        style={{ flex: 1, padding: "13px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,#00e676,#00c853)", color: "#070d1a", fontSize: 15, fontWeight: 800, cursor: "pointer", opacity: saving ? 0.6 : 1, fontFamily: "'Barlow Condensed',sans-serif" }}>
+                        {saving ? "Saving…" : "Save"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

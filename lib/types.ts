@@ -7,6 +7,7 @@ export interface User {
   password: string;
   role: Role;
   verified: boolean;
+  position?: string;
 }
 
 export interface Match {

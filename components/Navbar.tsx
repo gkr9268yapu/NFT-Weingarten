@@ -4,14 +4,16 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/lib/AppContext";
 import { logOut } from "@/lib/firebaseAuth";
+import { updateUserProfile } from "@/lib/firebaseDB";
 import HomeIcon from "./icons/HomeIcon";
 import ImageAltIcon from "./icons/ImageAltIcon";
 import MessageCircleIcon from "./icons/MessageCircleIcon";
+import EditProfileModal from "./EditProfileModal";
 
 const LINKS = [
-  { href: "/home", Icon: HomeIcon, label: "Home" },
-  { href: "/media", Icon: ImageAltIcon, label: "Media" },
-  { href: "/chat", Icon: MessageCircleIcon, label: "Chat" },
+  { href: "/home",  Icon: HomeIcon,          label: "Home"  },
+  { href: "/media", Icon: ImageAltIcon,       label: "Media" },
+  { href: "/chat",  Icon: MessageCircleIcon,  label: "Chat"  },
 ] as const;
 
 export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?: number }) {
@@ -20,17 +22,18 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
   const pathname = usePathname();
   const router = useRouter();
 
-  const [desktopOpen, setDesktopOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen,      setDesktopOpen]      = useState(false);
+  const [mobileOpen,       setMobileOpen]       = useState(false);
+  const [showEditProfile,  setShowEditProfile]  = useState(false);
 
   const desktopRef = useRef<HTMLDivElement>(null);
-  const mobileRef = useRef<HTMLDivElement>(null);
+  const mobileRef  = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (desktopRef.current && !desktopRef.current.contains(e.target as Node)) setDesktopOpen(false);
-      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) setMobileOpen(false);
+      if (mobileRef.current  && !mobileRef.current.contains(e.target as Node))  setMobileOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -65,10 +68,26 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
         </div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>{currentUser.name}</div>
-          <div style={{ fontSize: 11, color: "#00e676", textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>{currentUser.role}</div>
+          <div style={{ fontSize: 11, color: "#00e676", textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>
+            {currentUser.role}{currentUser.position ? ` · ${currentUser.position}` : ""}
+          </div>
         </div>
       </div>
       <div style={{ padding: "8px" }}>
+        {/* Edit Profile — users only */}
+        {currentUser.role === "user" && (
+          <button onClick={() => { setDesktopOpen(false); setMobileOpen(false); setShowEditProfile(true); }} style={{
+            width: "100%", padding: "11px 14px", borderRadius: 10,
+            background: "transparent", border: "none", color: "#fff",
+            fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center",
+            gap: 10, cursor: "pointer", textAlign: "left", marginBottom: 4,
+          }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.06)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
+            ✏️ Edit Profile
+          </button>
+        )}
         <button onClick={handleLogout} style={{
           width: "100%", padding: "11px 14px", borderRadius: 10,
           background: "transparent", border: "none", color: "#ff5252",
@@ -84,8 +103,19 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
     </div>
   );
 
+  const handleSaveProfile = async (name: string, position: string) => {
+    await updateUserProfile(currentUser.id, { name, position });
+  };
+
   return (
     <>
+      {showEditProfile && (
+        <EditProfileModal
+          currentUser={currentUser}
+          onClose={() => setShowEditProfile(false)}
+          onSave={handleSaveProfile}
+        />
+      )}
       <style>{`
         .desktop-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 62px; background: rgba(7,13,26,0.97); border-bottom: 1px solid rgba(255,255,255,0.06); position: sticky; top: 0; z-index: 200; backdrop-filter: blur(16px); }
         .mobile-topbar { display: none; }
@@ -150,7 +180,7 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
 
         <div style={{ display: "flex", gap: 4 }}>
           {LINKS.map(({ href, Icon, label }) => {
-            const active = pathname === href;
+            const active    = pathname === href;
             const showBadge = href === "/chat" && totalUnread > 0;
             return (
               <Link key={href} href={href} style={{
@@ -163,7 +193,7 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
               }}>
                 <Icon width={18} height={18} /> {label}
                 {showBadge && (
-                  <span style={{ background: "#ff5252", color: "#fff", borderRadius: "50%", minWidth: 18, height: 18, fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", position: "absolute", top: 2, right: 2 }}>
+                  <span style={{ background:"#ff5252", color:"#fff", borderRadius:"50%", minWidth:18, height:18, fontSize:10, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 4px", position:"absolute", top:2, right:2 }}>
                     {totalUnread > 99 ? "99+" : totalUnread}
                   </span>
                 )}
@@ -196,14 +226,14 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
         {/* Nav links in topbar */}
         <div className="mob-links">
           {LINKS.map(({ href, Icon, label }) => {
-            const active = pathname === href;
+            const active    = pathname === href;
             const showBadge = href === "/chat" && totalUnread > 0;
             return (
-              <Link key={href} href={href} className="mob-link" data-active={active} style={{ position: "relative" }}>
+              <Link key={href} href={href} className="mob-link" data-active={active} style={{ position:"relative" }}>
                 <Icon width={20} height={20} style={{ color: active ? "#00e676" : "rgba(255,255,255,.5)" }} />
                 <span className="mob-link-label" data-active={active}>{label}</span>
                 {showBadge && (
-                  <span style={{ position: "absolute", top: 0, right: 4, background: "#ff5252", color: "#fff", borderRadius: "50%", minWidth: 14, height: 14, fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" }}>
+                  <span style={{ position:"absolute", top:0, right:4, background:"#ff5252", color:"#fff", borderRadius:"50%", minWidth:14, height:14, fontSize:8, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 2px" }}>
                     {totalUnread > 99 ? "99+" : totalUnread}
                   </span>
                 )}

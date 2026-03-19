@@ -3,8 +3,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUp, logIn } from "@/lib/firebaseAuth";
 import { useApp } from "@/lib/AppContext";
-import EyeIcon from "./icons/EyeIcon";
-import EyeClosedIcon from "./icons/EyeClosedIcon";
 
 const IS = {
   width: "100%",
@@ -18,15 +16,21 @@ const IS = {
   marginBottom: 14,
 } as const;
 
-const VALID_DOMAINS = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com"];
+const POSITIONS = [
+  "Goalkeeper",
+  "Defender",
+  "Midfielder",
+  "Forward",
+  "Winger",
+  "Striker",
+  "Centre-Back",
+  "Full-Back",
+  "Attacking Midfielder",
+  "Defensive Midfielder",
+];
 
-function validateEmail(email: string): string {
-  if (!email.includes("@")) return "";
-  const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  if (!domain) return "";
-  if (!domain.includes(".")) return "";
-  if (!VALID_DOMAINS.includes(domain)) return "Invalid email domain. Did you mean @gmail.com?";
-  return "";
+function validateEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 const PASS_RULES = [
@@ -43,6 +47,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
   const [error, setError] = useState("");
   const [emailErr, setEmailErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,7 +55,7 @@ export default function LoginPage() {
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#070d1a" }}>
-      <img src="/logo.png" alt="Club Logo" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
+      <img src="/logo.png" alt="Club Logo" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} />
     </div>
   );
 
@@ -59,7 +64,8 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!email || !password) { setError("Please fill in all fields."); return; }
-    if (validateEmail(email)) { setError(validateEmail(email)); return; }    setBusy(true); setError("");
+    if (!validateEmail(email)) { setError("Invalid email address."); return; }
+    setBusy(true); setError("");
     try {
       await logIn(email, password);
       router.push("/home");
@@ -68,39 +74,35 @@ export default function LoginPage() {
     } finally { setBusy(false); }
   };
 
-
   const handleSignup = async () => {
     if (!name || !email || !password) { setError("All fields are required."); return; }
-    if (validateEmail(email)) { setError(validateEmail(email)); return; }
+    if (!validateEmail(email)) { setError("Invalid email address."); return; }
     if (!passValid) { setError("Please fix password requirements."); return; }
     setBusy(true); setError("");
     try {
-      // Check if name is already taken
+      // Check name not taken
       const { getDocs, collection } = await import("firebase/firestore");
       const { db } = await import("@/lib/firebase");
       const snap = await getDocs(collection(db, "users"));
       const nameTaken = snap.docs.some(
         d => (d.data().name as string)?.toLowerCase() === name.trim().toLowerCase()
       );
-      if (nameTaken) {
-        setError("This name is already taken. Please choose a different name.");
-        setBusy(false);
-        return;
-      }
-      await signUp(name.trim(), email, password, "user");
+      if (nameTaken) { setError("This name is already taken."); setBusy(false); return; }
+
+      await signUp(name.trim(), email, password, "user", position);
       setError("✓ Account created! Check your email to verify, then log in.");
       setMode("login");
       setPassword("");
+      setPosition("");
     } catch (e: unknown) {
       setError((e as Error).message || "Sign up failed.");
     } finally { setBusy(false); }
   };
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#070d1a 0%,#0d1b35 60%,#070d1a 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
 
       <div style={{ position: "absolute", inset: 0, opacity: .04, backgroundImage: "radial-gradient(circle,#00e676 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
-      <div style={{ position: "absolute", top: "10%", right: "5%", width: 300, height: 300, background: "radial-gradient(circle,rgba(0,230,118,.08),transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", bottom: "10%", left: "5%", width: 400, height: 400, background: "radial-gradient(circle,rgba(0,112,255,.06),transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
 
       <div className="slide-up" style={{ width: "100%", maxWidth: 460, padding: "0 24px" }}>
 
@@ -120,7 +122,7 @@ export default function LoginPage() {
                 border: `2px solid ${mode === m ? "#00e676" : "rgba(255,255,255,.08)"}`,
                 background: "transparent",
                 color: mode === m ? "#00e676" : "rgba(255,255,255,.4)",
-                fontWeight: 600, fontSize: 14, transition: "all .2s",
+                fontWeight: 600, fontSize: 14, transition: "all .2s", cursor: "pointer",
               }}>{m === "login" ? "Log In" : "Sign Up"}</button>
             ))}
           </div>
@@ -130,13 +132,28 @@ export default function LoginPage() {
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" style={IS} />
           )}
 
+          {/* Position — signup only, users only */}
+          {mode === "signup" && (
+            <div style={{ marginBottom: 14 }}>
+              <select
+                value={position}
+                onChange={e => setPosition(e.target.value)}
+                style={{ ...IS, marginBottom: 0, cursor: "pointer", appearance: "none", WebkitAppearance: "none" }}>
+                <option value="" disabled>Select your position (optional)</option>
+                {POSITIONS.map(p => (
+                  <option key={p} value={p} style={{ background: "#0e1828" }}>{p}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Email */}
           <input
             type="email"
             value={email}
             onChange={e => {
               setEmail(e.target.value);
-              setEmailErr(validateEmail(e.target.value));
+              setEmailErr(e.target.value && !validateEmail(e.target.value) ? "Invalid email address" : "");
             }}
             placeholder="Email Address"
             style={{ ...IS, borderColor: emailErr ? "#ff5252" : "rgba(255,255,255,0.12)" }}
@@ -153,17 +170,13 @@ export default function LoginPage() {
               style={{ ...IS, marginBottom: 0, borderColor: mode === "signup" && password && !passValid ? "#ff5252" : "rgba(255,255,255,0.12)", paddingRight: 44 }}
               onKeyDown={e => e.key === "Enter" && (mode === "login" ? handleLogin() : handleSignup())}
             />
-            <span
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPass(v => !v); }}
-              style={{
-                position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                color: "rgba(255,255,255,.4)", fontSize: 20, cursor: "pointer", userSelect: "none",
-              }}
-            >
-              {showPass ? <EyeClosedIcon /> : <EyeIcon />}            </span>
+            <span onClick={() => setShowPass(v => !v)}
+              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,.4)", fontSize: 18, cursor: "pointer" }}>
+              {showPass ? "🙈" : "👁"}
+            </span>
           </div>
 
-          {/* Password rules — signup only */}
+          {/* Password rules */}
           {mode === "signup" && password && (
             <div style={{ marginBottom: 16 }}>
               {passResults.map(r => (
@@ -174,7 +187,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Error / success message */}
+          {/* Error / success */}
           {error && (
             <div style={{
               padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 13,
@@ -189,7 +202,7 @@ export default function LoginPage() {
             background: busy ? "rgba(0,230,118,.4)" : "linear-gradient(135deg,#00e676,#00c853)",
             border: "none", borderRadius: 12, color: "#070d1a",
             fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 18, letterSpacing: 1.5, textTransform: "uppercase",
-            boxShadow: "0 4px 20px rgba(0,230,118,.3)", transition: "all .2s",
+            boxShadow: "0 4px 20px rgba(0,230,118,.3)", transition: "all .2s", cursor: "pointer",
           }}>
             {busy ? "Please wait…" : mode === "login" ? "Log In" : "Create Account"}
           </button>

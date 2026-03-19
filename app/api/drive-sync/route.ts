@@ -3,32 +3,33 @@ import { getDriveClient } from "@/lib/googleDrive";
 
 export async function POST() {
     try {
-        // Step 1 - test Drive connection
-        console.log("Step 1: connecting to Drive...");
         const drive = await getDriveClient();
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID!;
-        console.log("Step 1 OK. folderId:", folderId);
 
-        // Step 2 - list files
-        console.log("Step 2: listing files...");
+        // Get all files from Drive folder
+        // Debug - list ALL files without folder filter
         const driveRes = await drive.files.list({
-            q: `'${folderId}' in parents and trashed=false`,
-            fields: "files(id,name,createdTime,mimeType)",
-            orderBy: "createdTime desc",
+            fields: "files(id,name,mimeType,parents)",
+            pageSize: 50,
         });
-        const driveFiles = driveRes.data.files ?? [];
-        console.log("Step 2 OK. files found:", driveFiles.length);
+        const allFiles = driveRes.data.files ?? [];
+        console.log("ALL files OAuth can see:", allFiles.length);
+        allFiles.forEach(f => console.log("  -", f.name, "parents:", JSON.stringify(f.parents)));
 
-        // Step 3 - Firebase Admin
-        console.log("Step 3: connecting to Firestore Admin...");
+        // Also check the specific folder
+        const folderCheck = await drive.files.get({
+            fileId: folderId,
+            fields: "id,name,owners",
+        }).catch(e => { console.log("Folder access error:", e.message); return null; });
+        console.log("Folder info:", folderCheck?.data);
+        const driveFiles = driveRes.data.files ?? [];
+        const driveIds = new Set(driveFiles.map(f => f.id!));
+        console.log("Drive files found:", driveFiles.length);
+
+        // Connect to Firestore Admin
         const { initializeApp, getApps, cert } = await import("firebase-admin/app");
         const { getFirestore } = await import("firebase-admin/firestore");
-
         const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
-        console.log("Admin project:", process.env.FIREBASE_ADMIN_PROJECT_ID);
-        console.log("Admin email:", process.env.FIREBASE_ADMIN_CLIENT_EMAIL);
-        console.log("Private key starts with:", privateKey?.slice(0, 40));
-
         if (!getApps().length) {
             initializeApp({
                 credential: cert({
@@ -39,26 +40,32 @@ export async function POST() {
             });
         }
         const db = getFirestore();
-        console.log("Step 3 OK");
 
-        // Step 4 - get existing media
-        console.log("Step 4: getting existing media docs...");
+        // Get all existing media docs
         const mediaSnap = await db.collection("media").get();
-        const existingIds = new Set(mediaSnap.docs.map(d => d.data().driveFileId as string));
-        console.log("Step 4 OK. existing:", existingIds.size);
+        const existingIds = new Set<string>();
 
-        // Step 5 - add new ones
+        // Delete Firestore docs where Drive file no longer exists
+        let deleted = 0;
+        for (const docSnap of mediaSnap.docs) {
+            const driveFileId = docSnap.data().driveFileId as string;
+            if (driveFileId && !driveIds.has(driveFileId)) {
+                await docSnap.ref.delete();
+                deleted++;
+                console.log("Removed deleted file from Firestore:", driveFileId);
+            } else {
+                existingIds.add(driveFileId);
+            }
+        }
+        console.log("Deleted stale docs:", deleted);
+
+        // Add new files from Drive
         let added = 0;
         for (const file of driveFiles) {
-            console.log("checking file:", file.id, file.name, file.mimeType);
-            if (!file.id || existingIds.has(file.id)) {
-                console.log("skipping - already exists or no id");
-                continue;
-            }
-            if (!file.mimeType?.startsWith("image/")) {
-                console.log("skipping - not an image, mimeType:", file.mimeType);
-                continue;
-            }
+            if (!file.id || existingIds.has(file.id)) continue;
+            const isImage = file.mimeType?.startsWith("image/");
+            const isVideo = file.mimeType?.startsWith("video/");
+            if (!isImage && !isVideo) continue;
 
             await drive.permissions.create({
                 fileId: file.id,
@@ -69,19 +76,21 @@ export async function POST() {
             await db.collection("media").add({
                 url: `/api/image/${file.id}`,
                 driveFileId: file.id,
-                filename: file.name ?? "image",
+                filename: file.name ?? "file",
                 uploader: "Drive Sync",
                 date: today,
+                mimeType: file.mimeType ?? "",
                 createdAt: new Date(),
             });
             added++;
+            console.log("Added:", file.name);
         }
 
-        console.log("Done. added:", added);
-        return NextResponse.json({ success: true, added });
+        console.log("Sync complete. Added:", added, "Deleted:", deleted);
+        return NextResponse.json({ success: true, added, deleted });
 
     } catch (err: unknown) {
-        console.error("Drive sync FULL error:", err);
+        console.error("Drive sync error:", err);
         const msg = err instanceof Error ? err.message : String(err);
         return NextResponse.json({ error: msg }, { status: 500 });
     }
