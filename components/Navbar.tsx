@@ -68,9 +68,11 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
         </div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>{currentUser.name}</div>
-          <div style={{ fontSize: 11, color: "#00e676", textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>
-            {currentUser.role}{currentUser.position ? ` · ${currentUser.position}` : ""}
-          </div>
+          {currentUser.position && (
+            <div style={{ fontSize: 11, color: "#00e676", textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>
+              {currentUser.position}
+            </div>
+          )}
         </div>
       </div>
       <div style={{ padding: "8px" }}>

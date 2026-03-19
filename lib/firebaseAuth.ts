@@ -46,11 +46,6 @@ export async function logIn(
 
   const profile = snap.data() as Omit<User, "password">;
 
-  if (profile.role !== expectedRole) {
-    await signOut(auth);
-    throw new Error(`Wrong role selected. You are registered as "${profile.role}".`);
-  }
-
   return { ...profile, password: "" };   // never expose password client-side
 }
 
