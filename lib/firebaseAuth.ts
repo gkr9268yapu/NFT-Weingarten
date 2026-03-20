@@ -60,10 +60,8 @@ export function listenAuthState(
 ): () => void {
   return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
     if (!firebaseUser) { callback(null); return; }
-
     const snap = await getDoc(doc(db, "users", firebaseUser.uid));
     if (!snap.exists()) { callback(null); return; }
-
     callback({ ...(snap.data() as Omit<User, "password">), password: "" });
   });
 }

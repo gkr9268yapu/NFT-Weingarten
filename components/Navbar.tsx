@@ -215,11 +215,14 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
             width: 40, height: 40, borderRadius: "50%",
             background: "linear-gradient(135deg,#00e676,#0070ff)",
             border: desktopOpen ? "2px solid #00e676" : "2px solid transparent",
-            color: "#070d1a", fontWeight: 800, fontSize: 15,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", boxShadow: "0 0 12px rgba(0,230,118,.3)",
+            overflow: "hidden", cursor: "pointer", boxShadow: "0 0 12px rgba(0,230,118,.3)",
+            padding: 0,
           }}>
-            {initials}
+            {currentUser.photoURL ? (
+              <img src={currentUser.photoURL} alt={currentUser.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ color: "#070d1a", fontWeight: 800, fontSize: 15 }}>{initials}</span>
+            )}
           </button>
           {desktopOpen && <ProfileDropdown />}
         </div>

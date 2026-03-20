@@ -7,6 +7,8 @@ import type { User, Match, Message, MediaItem } from "./types";
 import { listenAuthState } from "./firebaseAuth";
 import { listenUsers, listenMatches, listenMessages, listenConversations } from "./firebaseDB";
 import { listenMedia } from "./firebaseStorage";
+import { onSnapshot, doc } from "firebase/firestore";
+import { db } from "./firebase";
 
 interface AppContextValue {
   currentUser: User | null;
@@ -54,6 +56,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       listenConversations(userId, convs => {
         const total = convs.reduce((sum, c) => sum + ((c.unread?.[userId] ?? 0)), 0);
         setTotalUnread(total);
+      }),
+      // Listen to current user's own profile for real-time updates
+      onSnapshot(doc(db, "users", userId), snap => {
+        if (snap.exists()) {
+          setCurrentUser({ ...(snap.data() as Omit<User, "password">), password: "" });
+        }
       }),
     ];
   };

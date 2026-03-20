@@ -2,9 +2,6 @@
 import { useState, useRef } from "react";
 import type { User } from "@/lib/types";
 
-const [uploadingPic, setUploadingPic] = useState(false);
-const photoRef = useRef<HTMLInputElement>(null);
-
 const POSITIONS = [
     "Goalkeeper", "Defender", "Midfielder", "Forward",
     "Winger", "Striker", "Centre-Back", "Full-Back",
@@ -23,6 +20,8 @@ export default function EditProfileModal({ currentUser, onClose, onSave }: Props
     const [photoURL, setPhotoURL] = useState(currentUser.photoURL ?? "");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [uploadingPic, setUploadingPic] = useState(false);
+    const photoRef = useRef<HTMLInputElement>(null);
 
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
