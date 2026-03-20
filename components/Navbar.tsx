@@ -63,8 +63,14 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
       ...(upward ? { bottom: "calc(100% + 10px)" } : { top: "calc(100% + 10px)" }),
     }}>
       <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg,#00e676,#0070ff)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: "#070d1a", flexShrink: 0 }}>
-          {initials}
+        <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+          {currentUser.photoURL ? (
+            <img src={currentUser.photoURL} alt={currentUser.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#00e676,#0070ff)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: "#070d1a" }}>
+              {initials}
+            </div>
+          )}
         </div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>{currentUser.name}</div>
@@ -247,14 +253,14 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
           <div ref={mobileRef} style={{ position: "relative" }}>
             <button className="mob-link" data-active={mobileOpen} onClick={() => setMobileOpen(p => !p)}
               style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "4px 10px", borderRadius: 10 }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: "50%",
-                background: "linear-gradient(135deg,#00e676,#0070ff)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 800, fontSize: 11, color: "#070d1a",
-                outline: mobileOpen ? "2px solid #00e676" : "none",
-              }}>
-                {initials}
+              <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", outline: mobileOpen ? "2px solid #00e676" : "none" }}>
+                {currentUser.photoURL ? (
+                  <img src={currentUser.photoURL} alt={currentUser.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#00e676,#0070ff)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 11, color: "#070d1a" }}>
+                    {initials}
+                  </div>
+                )}
               </div>
               <span className="mob-link-label" data-active={mobileOpen}>Me</span>
             </button>

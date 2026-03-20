@@ -249,10 +249,18 @@ export default function ChatListPage() {
                     </div>
                   )}
 
-                  <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18, color: "#fff", flexShrink: 0 }}>
-                    {name[0]}
-                  </div>
-
+                  {(() => {
+                    const otherId2 = conv.participants.find(p => p !== currentUser.id) ?? "";
+                    const other = users.find(u => u.id === otherId2);
+                    return other?.photoURL ? (
+                      <img src={other.photoURL} alt={name}
+                        style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 18, color: "#fff", flexShrink: 0 }}>
+                        {name[0]}
+                      </div>
+                    );
+                  })()}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{name}</span>

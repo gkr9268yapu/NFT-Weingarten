@@ -11,7 +11,7 @@ import ChatRoom from "@/components/ChatRoom";
 import type { ReplyTo, PollOption } from "@/lib/types";
 
 export default function TeamChatPage() {
-    const { currentUser, messages, loading } = useApp();
+    const { currentUser, messages, users, loading } = useApp();
     const router = useRouter();
     const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +99,7 @@ export default function TeamChatPage() {
             </div>
             <ChatRoom
                 messages={messages}
+                users={users}
                 currentUser={currentUser}
                 onSendText={handleSendText}
                 onSendImage={handleSendImage}

@@ -134,9 +134,17 @@ export default function PrivateChatPage() {
         <div ref={wrapRef} style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden", background: "#070d1a" }}>
             <div style={{ flexShrink: 0, height: 56, background: "rgba(7,13,26,.97)", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", padding: "0 16px", gap: 12 }}>
                 <button onClick={() => router.push("/chat")} style={{ background: "none", border: "none", color: "rgba(255,255,255,.6)", fontSize: 22, cursor: "pointer", padding: "4px 8px 4px 0" }}>←</button>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: "#fff", flexShrink: 0 }}>
-                    {otherName[0]}
-                </div>
+                {(() => {
+                    const other = users.find(u => u.id === otherId);
+                    return other?.photoURL ? (
+                        <img src={other.photoURL} alt={otherName}
+                            style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: "#fff", flexShrink: 0 }}>
+                            {otherName[0]}
+                        </div>
+                    );
+                })()}
                 <div>
                     <div style={{ color: "#fff", fontWeight: 700, fontFamily: "'Barlow Condensed',sans-serif", fontSize: 17, letterSpacing: .5 }}>{otherName}</div>
                     <div style={{ color: "rgba(255,255,255,.35)", fontSize: 11 }}>Private chat</div>
@@ -144,6 +152,7 @@ export default function PrivateChatPage() {
             </div>
             <ChatRoom
                 messages={messages}
+                users={users}
                 currentUser={currentUser}
                 onSendText={handleSendText}
                 onSendImage={handleSendImage}

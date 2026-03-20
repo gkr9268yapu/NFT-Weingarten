@@ -474,7 +474,7 @@ export async function saveFCMToken(userId: string, token: string): Promise<void>
 
 export async function updateUserProfile(
   userId: string,
-  data: { name?: string; position?: string }
+  data: { name?: string; position?: string; photoURL?: string; hasSetupProfile?: boolean }
 ): Promise<void> {
   await updateDoc(doc(db, "users", userId), data);
 }

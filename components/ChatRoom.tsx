@@ -30,6 +30,7 @@ function getFileIcon(fileName: string) {
 interface Props {
     messages: Message[];
     currentUser: User;
+    users: User[];
     onSendText: (text: string, replyTo?: ReplyTo) => Promise<void>;
     onSendImage: (file: File, replyTo?: ReplyTo) => Promise<void>;
     onSendDocument: (file: File, replyTo?: ReplyTo) => Promise<void>;
@@ -44,7 +45,7 @@ interface Props {
 }
 
 export default function ChatRoom({
-    messages, currentUser,
+    messages, currentUser, users,
     onSendText, onSendImage, onSendDocument, onSendPoll,
     onReact, onDeleteForMe, onDeleteForEveryone,
     onVote, onClosePoll, onPin, onUnpin,
@@ -319,11 +320,17 @@ export default function ChatRoom({
                                         </div>
                                     )}
 
-                                    {!isMe && (
-                                        <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#2a3a5c,#1a2540)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, color: "#fff", marginBottom: 4 }}>
-                                            {msg.user[0]}
-                                        </div>
-                                    )}
+                                    {!isMe && (() => {
+                                        const sender = users.find(u => u.id === msg.userId);
+                                        return sender?.photoURL ? (
+                                            <img src={sender.photoURL} alt={sender.name}
+                                                style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, objectFit: "cover", marginBottom: 4 }} />
+                                        ) : (
+                                            <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#2a3a5c,#1a2540)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, color: "#fff", marginBottom: 4 }}>
+                                                {msg.user[0]}
+                                            </div>
+                                        );
+                                    })()}
 
                                     <div style={{ maxWidth: msg.type === "poll" ? "88%" : "75%" }}>
                                         {!isMe && !isDeleted && (

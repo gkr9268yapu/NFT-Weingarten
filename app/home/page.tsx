@@ -8,6 +8,8 @@ import MatchCard from "@/components/MatchCard";
 import DetailModal from "@/components/DetailModal";
 import MatchFormModal from "@/components/MatchFormModal";
 import type { Match } from "@/lib/types";
+import ProfileSetupModal from "@/components/ProfileSetupModal";
+import { updateUserProfile } from "@/lib/firebaseDB";
 
 const EMPTY_FORM = {
   title: "", team1: "", team2: "", date: "", time: "",
@@ -25,7 +27,14 @@ export default function HomePage() {
   const [editMatch, setEditMatch] = useState<Match | null>(null);
   const [newForm, setNewForm] = useState(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
 
+  useEffect(() => {
+    if (currentUser && currentUser.role === "user" && !currentUser.hasSetupProfile) {
+      setShowProfileSetup(true);
+    }
+  }, [currentUser]);
+  
   // ✅ All hooks BEFORE any conditional return
   useEffect(() => {
     if (!loading && !currentUser) router.push("/");
@@ -40,6 +49,14 @@ export default function HomePage() {
   const today = new Date().toISOString().split("T")[0];
   const activeMatches = matches.filter(m => m.expiryDate >= today);
   const liveDetail = detailMatch ? (matches.find(m => m.id === detailMatch.id) ?? detailMatch) : null;
+
+  const handleProfileSetupComplete = async (photoURL?: string) => {
+    await updateUserProfile(currentUser!.id, {
+      photoURL: photoURL ?? "",
+      hasSetupProfile: true,
+    });
+    setShowProfileSetup(false);
+  };
 
   const handleAvailability = async (id: string, status: "available" | "notAvailable") => {
     const m = matches.find(x => x.id === id);
@@ -174,6 +191,12 @@ export default function HomePage() {
           data={editMatch}
           onChange={d => setEditMatch(prev => prev ? { ...prev, ...d } : prev)}
           onSubmit={handleSaveEdit} onClose={() => setEditMatch(null)}
+        />
+      )}
+      {showProfileSetup && currentUser && (
+        <ProfileSetupModal
+          currentUser={currentUser}
+          onComplete={handleProfileSetupComplete}
         />
       )}
     </div>

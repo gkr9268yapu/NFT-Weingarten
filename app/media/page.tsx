@@ -7,7 +7,7 @@ import type { MediaItem } from "@/lib/types";
 import CheckSquareIcon from "@/components/icons/CheckSquareIcon";
 
 export default function MediaPage() {
-  const { currentUser, mediaItems, loading } = useApp();
+  const { currentUser, mediaItems, users, loading } = useApp();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -346,9 +346,17 @@ export default function MediaPage() {
 
                   {/* Info */}
                   <div className="media-card-info" style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#0070ff,#00e676)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, flexShrink: 0, color: "#fff" }}>
-                      {item.uploader[0]}
-                    </div>
+                    {(() => {
+                      const uploader = users.find(u => u.name === item.uploader);
+                      return uploader?.photoURL ? (
+                        <img src={uploader.photoURL} alt={item.uploader}
+                          style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#0070ff,#00e676)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, flexShrink: 0, color: "#fff" }}>
+                          {item.uploader[0]}
+                        </div>
+                      );
+                    })()}
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{item.uploader}</div>
                       <div style={{ fontSize: 11, color: "rgba(255,255,255,.35)" }}>{item.date}</div>
@@ -369,9 +377,17 @@ export default function MediaPage() {
             <img src={preview.url} alt={preview.filename} style={{ maxWidth: "88vw", maxHeight: "75vh", objectFit: "contain", borderRadius: 16, boxShadow: "0 24px 80px rgba(0,0,0,.8)" }} />
             <div style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, width: "100%", maxWidth: 500, flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#0070ff,#00e676)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#fff", flexShrink: 0 }}>
-                  {preview.uploader[0]}
-                </div>
+                {(() => {
+                  const uploader = users.find(u => u.name === preview.uploader);
+                  return uploader?.photoURL ? (
+                    <img src={uploader.photoURL} alt={preview.uploader}
+                      style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#0070ff,#00e676)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#fff", flexShrink: 0 }}>
+                      {preview.uploader[0]}
+                    </div>
+                  );
+                })()}
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14 }}>{preview.uploader}</div>
                   <div style={{ fontSize: 12, color: "rgba(255,255,255,.4)" }}>{preview.date}</div>
