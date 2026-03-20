@@ -261,6 +261,7 @@ export default function ChatListPage() {
                       </div>
                     );
                   })()}
+                  
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{name}</span>

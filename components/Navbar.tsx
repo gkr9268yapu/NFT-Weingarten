@@ -111,8 +111,8 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
     </div>
   );
 
-  const handleSaveProfile = async (name: string, position: string) => {
-    await updateUserProfile(currentUser.id, { name, position });
+  const handleSaveProfile = async (name: string, position: string, photoURL: string) => {
+    await updateUserProfile(currentUser.id, { name, position, photoURL });
   };
 
   return (
