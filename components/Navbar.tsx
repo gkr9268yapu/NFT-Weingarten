@@ -9,10 +9,12 @@ import HomeIcon from "./icons/HomeIcon";
 import ImageAltIcon from "./icons/ImageAltIcon";
 import MessageCircleIcon from "./icons/MessageCircleIcon";
 import EditProfileModal from "./EditProfileModal";
+import TrophyIcon from "./icons/TrophyIcon";
 
 const LINKS = [
   { href: "/home",  Icon: HomeIcon,          label: "Home"  },
   { href: "/media", Icon: ImageAltIcon,       label: "Media" },
+  { href: "/players", Icon: TrophyIcon, label: "Players" },
   { href: "/chat",  Icon: MessageCircleIcon,  label: "Chat"  },
 ] as const;
 
