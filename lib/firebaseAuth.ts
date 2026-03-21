@@ -37,7 +37,6 @@ export async function signUp(
 export async function logIn(
   email: string,
   password: string,
-  expectedRole?: Role
 ): Promise<User> {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   const snap = await getDoc(doc(db, "users", cred.user.uid));

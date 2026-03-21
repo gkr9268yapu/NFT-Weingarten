@@ -305,30 +305,6 @@ export default function PlayersPage() {
                         </div>
                     ))}
                 </div>
-
-                {/* Stats summary below list */}
-                {computed.length > 0 && (
-                    <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                        {["attendance", "goals", "manOfMatch", "mvpPoints", "totalPoints"].map(key => {
-                            const labels: Record<string, string> = {
-                                attendance: "Attendance %", goals: "Goals", manOfMatch: "Man of Match",
-                                mvpPoints: "MVP Points", totalPoints: "Total Points"
-                            };
-                            const top = computed[0];
-                            return (
-                                <div key={key} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, padding: "10px 16px", flex: 1, minWidth: 120 }}>
-                                    <div style={{ color: "rgba(255,255,255,.4)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>{labels[key]}</div>
-                                    <div style={{ color: "#00e676", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, fontWeight: 900 }}>
-                                        {top.playerName}
-                                    </div>
-                                    <div style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>
-                                        {key === "attendance" ? `${(top as any)[key]}%` : (top as any)[key]}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
             </main>
 
             {/* ── PLAYER BANNER MODAL ───────────────────────── */}
