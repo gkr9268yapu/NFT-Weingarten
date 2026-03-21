@@ -18,13 +18,9 @@ export default function ProfileSetupModal({ currentUser, onComplete }: Props) {
         if (!file) return;
         setUploading(true);
         try {
-            const form = new FormData();
-            form.append("file", file);
-            form.append("uploader", currentUser.name);
-            form.append("chatOnly", "true");
-            const res = await fetch("/api/upload", { method: "POST", body: form });
-            const data = await res.json();
-            if (data.url) setPreview(data.url);
+            const { uploadProfilePhoto } = await import("@/lib/profileStorage");
+            const url = await uploadProfilePhoto(currentUser.id, file);
+            setPreview(url);
         } finally {
             setUploading(false);
         }

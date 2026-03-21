@@ -29,14 +29,12 @@ export default function EditProfileModal({ currentUser, onClose, onSave }: Props
         if (!file) return;
         setUploadingPic(true);
         try {
-            const form = new FormData();
-            form.append("file", file);
-            form.append("uploader", currentUser.name);
-            form.append("chatOnly", "true");
-            const res = await fetch("/api/upload", { method: "POST", body: form });
-            const data = await res.json();
-            if (data.url) setPhotoURL(data.url);
-        } finally { setUploadingPic(false); }
+            const { uploadProfilePhoto } = await import("@/lib/profileStorage");
+            const url = await uploadProfilePhoto(currentUser.id, file);
+            setPhotoURL(url);
+        } finally {
+            setUploadingPic(false);
+        }
     };
 
     const handleSave = async () => {
