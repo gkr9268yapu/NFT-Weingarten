@@ -10,6 +10,7 @@ import ImageAltIcon from "./icons/ImageAltIcon";
 import MessageCircleIcon from "./icons/MessageCircleIcon";
 import EditProfileModal from "./EditProfileModal";
 import TrophyIcon from "./icons/TrophyIcon";
+import EditAltIcon from "./icons/EditAltIcon";
 
 const LINKS = [
   { href: "/home",  Icon: HomeIcon,          label: "Home"  },
@@ -95,7 +96,7 @@ export default function Navbar({ totalUnread: totalUnreadProp }: { totalUnread?:
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.06)")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            ✏️ Edit Profile
+            <EditAltIcon width={16} height={16} /> Edit Profile
           </button>
         )}
         <button onClick={handleLogout} style={{

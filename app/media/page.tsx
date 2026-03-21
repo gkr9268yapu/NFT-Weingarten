@@ -394,7 +394,6 @@ export default function MediaPage() {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => handleDownload(preview)} style={{ background: "linear-gradient(135deg,#00e676,#00c853)", color: "#070d1a", border: "none", padding: "10px 18px", borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>⬇ Download</button>
                 {currentUser.role === "host" && (
                   <button onClick={() => handleDelete(preview)} style={{ background: "rgba(255,82,82,.15)", border: "1px solid rgba(255,82,82,.3)", color: "#ff5252", padding: "10px 16px", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>🗑 Delete</button>
                 )}

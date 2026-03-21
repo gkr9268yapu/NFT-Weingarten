@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import type { User } from "@/lib/types";
+import EditAltIcon from "./icons/EditAltIcon";
 
 const POSITIONS = [
     "Goalkeeper", "Defender", "Midfielder", "Forward",
@@ -80,8 +81,8 @@ export default function EditProfileModal({ currentUser, onClose, onSave }: Props
                         </div>
                         {/* Edit button bottom left */}
                         <button onClick={() => photoRef.current?.click()}
-                            style={{ position: "absolute", bottom: 0, left: 0, width: 28, height: 28, borderRadius: "50%", background: "#00e676", border: "2px solid #0e1828", color: "#070d1a", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
-                            ✏️
+                            style={{ position: "absolute", bottom: 0, left: 0, width: 28, height: 28, borderRadius: "50%", background: "#00e676", border: "2px solid #0e1828", color: "#070d1a", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <EditAltIcon width={14} height={14} />
                         </button>
                     </div>
                     <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display: "none" }} />

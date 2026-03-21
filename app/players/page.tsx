@@ -14,6 +14,7 @@ import {
 } from "@/lib/playerDB";
 import type { CalendarSession, SessionType, ComputedPlayerStats, PlayerSessionStats } from "@/lib/playerTypes";
 import type { User } from "@/lib/types";
+import EditAltIcon from "@/components/icons/EditAltIcon";
 
 const MONTHS = [
     "January", "February", "March", "April", "May", "June",
@@ -248,8 +249,7 @@ export default function PlayersPage() {
                                             style={{ width: "100%", padding: "12px 16px", background: "transparent", border: "none", color: "#fff", fontSize: 14, textAlign: "left", cursor: "pointer" }}
                                             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")}
                                             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                                            ✏️ Edit
-                                        </button>
+                                            <EditAltIcon width={15} height={15} style={{ marginRight: 6 }} /> Edit                                        </button>
                                     )}
                                 </div>
                             )}
@@ -262,8 +262,8 @@ export default function PlayersPage() {
                     {/* Table header */}
                     <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 1fr", padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
                         <div style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>Rank</div>
-                        <div style={{ color: "#ff5252", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>Name</div>
-                        <div style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>Position</div>
+                        <div style={{ color: "#ff5252", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase", marginLeft: 250 }}>Name</div>
+                        <div style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase", marginLeft: 150 }}>Position</div>
                     </div>
 
                     {computed.length === 0 ? (
@@ -285,7 +285,7 @@ export default function PlayersPage() {
                             </div>
 
                             {/* Name + photo */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ display: "flex", alignItems: "center", marginLeft: 65, gap: 142 }}>
                                 <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: `2px solid ${medal(idx)}`, flexShrink: 0 }}>
                                     {player.photoURL ? (
                                         <img src={player.photoURL} alt={player.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -299,7 +299,7 @@ export default function PlayersPage() {
                             </div>
 
                             {/* Position */}
-                            <div style={{ color: "rgba(255,255,255,.6)", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 16 }}>
+                            <div style={{ color: "rgba(255,255,255,.6)", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 20, marginLeft:150 }}>
                                 {player.position ?? "—"}
                             </div>
                         </div>
@@ -319,7 +319,7 @@ export default function PlayersPage() {
                         <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
                             {/* Left — photo + position + MVP */}
                             <div style={{ flexShrink: 0 }}>
-                                <div style={{ color: "#1a2540", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 16, marginBottom: 12 }}>
+                                <div style={{ color: "#1a2540", fontFamily: "'Barlow Condensed',sans-serif",  fontWeight: 700, fontSize: 16, marginBottom: 12, marginLeft: 39 }}>
                                     {selectedPlayer.position ?? "Player"}
                                 </div>
                                 <div style={{ width: 140, height: 140, borderRadius: "50%", overflow: "hidden", border: "4px solid rgba(255,255,255,.3)" }}>
@@ -333,7 +333,7 @@ export default function PlayersPage() {
                                 </div>
                                 <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 6 }}>
                                     <span style={{ fontSize: 20 }}>⭐</span>
-                                    <span style={{ color: "#1a2540", fontWeight: 700, fontSize: 14 }}>MVP Points: {selectedPlayer.mvpPoints}</span>
+                                    <span style={{ color: "#1a2540", fontWeight: 700, fontSize: 20 }}>MVP Points: {selectedPlayer.mvpPoints}</span>
                                 </div>
                             </div>
 
