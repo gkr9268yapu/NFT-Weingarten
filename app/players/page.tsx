@@ -66,7 +66,11 @@ export default function PlayersPage() {
         if (!showMenu) return;
         const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false); };
         document.addEventListener("mousedown", h);
-        return () => document.removeEventListener("mousedown", h);
+        document.addEventListener("touchstart", h as any);
+        return () => {
+            document.removeEventListener("mousedown", h);
+            document.removeEventListener("touchstart", h as any);
+        };
     }, [showMenu]);
 
     if (loading) return <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}><img src="/logo.png" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }} /></div>;
@@ -132,10 +136,9 @@ export default function PlayersPage() {
                             <button onClick={nextMonth} style={{ background: "none", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>→</button>
                         </div>
                         <div ref={menuRef} style={{ position: "relative" }}>
-                            <button onClick={() => setShowMenu(!showMenu)}
-                                style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: "50%", width: 36, height: 36, color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>⋮</button>
+                            <button onClick={e => { e.stopPropagation(); setShowMenu(!showMenu); }}                                style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: "50%", width: 36, height: 36, color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>⋮</button>
                             {showMenu && (
-                                <div style={{ position: "absolute", right: 0, top: 42, background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, overflow: "hidden", minWidth: 160, boxShadow: "0 12px 40px rgba(0,0,0,.7)", zIndex: 200 }}>
+                                <div style={{ position: "fixed", right: 16, top: "auto", background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, overflow: "hidden", minWidth: 160, boxShadow: "0 12px 40px rgba(0,0,0,.7)", zIndex: 9999 }}>
                                     <button onClick={() => { setShowMenu(false); setShowCustom(true); }}
                                         style={{ width: "100%", padding: "12px 16px", background: "transparent", border: "none", color: "#fff", fontSize: 14, textAlign: "left", cursor: "pointer" }}
                                         onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
