@@ -138,7 +138,8 @@ export default function PlayersPage() {
                         <div ref={menuRef} style={{ position: "relative" }}>
                             <button onClick={e => { e.stopPropagation(); setShowMenu(!showMenu); }}                                style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: "50%", width: 36, height: 36, color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>⋮</button>
                             {showMenu && (
-                                <div style={{ position: "fixed", right: 16, top: "auto", background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, overflow: "hidden", minWidth: 160, boxShadow: "0 12px 40px rgba(0,0,0,.7)", zIndex: 9999 }}>
+                                <div className="ps-dropdown"
+                                    style={{ background: "#0e1828", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, overflow: "hidden", minWidth: 160, boxShadow: "0 12px 40px rgba(0,0,0,.7)", zIndex: 9999 }}>
                                     <button onClick={() => { setShowMenu(false); setShowCustom(true); }}
                                         style={{ width: "100%", padding: "12px 16px", background: "transparent", border: "none", color: "#fff", fontSize: 14, textAlign: "left", cursor: "pointer" }}
                                         onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,.05)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
@@ -459,6 +460,21 @@ export default function PlayersPage() {
                 @media (max-width: 400px) {
                     .ps-title       { font-size: 26px; }
                     .ps-banner-name { font-size: 22px; }
+                }
+
+                    .ps-dropdown {
+                    position: absolute;
+                    right: 0;
+                    top: 42px;
+                }
+                @media (max-width: 640px) {
+                    .ps-dropdown {
+                        position: fixed;
+                        right: 16px;
+                        top: auto;
+                        bottom: auto;
+                        left: auto;
+                    }
                 }
             `}</style>
         </div>
