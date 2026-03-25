@@ -47,7 +47,8 @@ export default function PlayersPage() {
     useEffect(() => { if (!loading && !currentUser) router.push("/"); }, [loading, currentUser, router]);
     useEffect(() => {
         const month = getMonthKey(viewYear, viewMonth);
-        return listenCalendarSessions(month, setSessions)();
+        const unsub = listenCalendarSessions(month, setSessions);
+        return () => unsub();
     }, [viewYear, viewMonth]);
     useEffect(() => {
         const month = getMonthKey(viewYear, viewMonth);
