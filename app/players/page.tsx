@@ -204,7 +204,7 @@ export default function PlayersPage() {
 
             {/* ── PLAYER BANNER ── */}
             {selectedPlayer && (
-                <div onClick={() => setSelectedPlayer(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                <div onClick={() => setSelectedPlayer(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding:"16px 8px" }}>
                     <div onClick={e => e.stopPropagation()} className="ps-banner">
                         <button onClick={() => setSelectedPlayer(null)} style={{ position: "absolute", top: 14, right: 14, background: "rgba(0,0,0,.3)", border: "none", color: "#fff", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
                         <div className="ps-banner-inner">
@@ -231,9 +231,9 @@ export default function PlayersPage() {
                                     { label: "Man of the Match", value: selectedPlayer.manOfMatch },
                                     { label: "Total Points", value: selectedPlayer.totalPoints },
                                 ].map(({ label, value }) => (
-                                    <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid rgba(26,37,64,.2)" }}>
-                                        <span style={{ color: "#1a2540", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 20, fontWeight: 700 }}>{label}:</span>
-                                        <span style={{ color: "#1a2540", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 24, fontWeight: 900 }}>{value}</span>
+                                    <div key={label} className="ps-banner-stat-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(26,37,64,.2)" }}>
+                                        <span style={{ color: "#1a2540", fontFamily: "'Barlow Condensed',sans-serif", fontSize: "clamp(15px,4vw,20px)", fontWeight: 700 }}>{label}:</span>
+                                        <span style={{ color: "#1a2540", fontFamily: "'Barlow Condensed',sans-serif", fontSize: "clamp(17px,5vw,24px)", fontWeight: 900 }}>{value}</span>
                                     </div>
                                 ))}
                             </div>
@@ -372,19 +372,20 @@ export default function PlayersPage() {
                             <h3 style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, fontWeight: 900 }}>{editingStats.sessionLabel}</h3>
                             <button onClick={() => setEditingStats(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,.5)", fontSize: 22, cursor: "pointer" }}>✕</button>
                         </div>
-                        <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
-                            <div style={{ minWidth: 420 }}>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 70px 90px 80px", gap: 8, padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
-                                    {["Player", "Present", "Goals", "Man of Match", "MVP Pts"].map(h => (
-                                        <div key={h} style={{ color: "rgba(255,255,255,.4)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>{h}</div>
-                                    ))}
-                                </div>
-                                <div style={{ padding: "0 24px" }}>
-                                    {users.filter(u => u.role === "user").map(player => {
-                                        const stat = statsForm[player.id] ?? { attended: false, goals: 0, manOfMatch: 0, mvpPoints: 0 };
-                                        const upd = (field: keyof PlayerSessionStats, value: any) => setStatsForm(prev => ({ ...prev, [player.id]: { ...stat, [field]: value } }));
-                                        return (
-                                            <div key={player.id} style={{ display: "grid", gridTemplateColumns: "1fr 80px 70px 90px 80px", gap: 8, alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
+                        <div style={{ flex: 1, overflowY: "auto" }}>
+                            <div className="ps-stats-header">
+                                {["Player", "Present", "Goals", "Man of Match", "MVP Pts"].map(h => (
+                                    <div key={h} style={{ color: "rgba(255,255,255,.4)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>{h}</div>
+                                ))}
+                            </div>
+                            <div style={{ padding: "0 20px" }}>
+                                {users.filter(u => u.role === "user").map(player => {
+                                    const stat = statsForm[player.id] ?? { attended: false, goals: 0, manOfMatch: 0, mvpPoints: 0 };
+                                    const upd = (field: keyof PlayerSessionStats, value: any) => setStatsForm(prev => ({ ...prev, [player.id]: { ...stat, [field]: value } }));
+                                    return (
+                                        <div key={player.id} className="ps-stats-row">
+                                            {/* Desktop table row */}
+                                            <div className="ps-stats-desktop">
                                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                                     <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
                                                         {player.photoURL
@@ -392,7 +393,7 @@ export default function PlayersPage() {
                                                             : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 13 }}>{player.name[0]}</div>
                                                         }
                                                     </div>
-                                                    <span style={{ color: "#fff", fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{player.name}</span>
+                                                    <span style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>{player.name}</span>
                                                 </div>
                                                 <div style={{ display: "flex", justifyContent: "center" }}>
                                                     <input type="checkbox" checked={stat.attended} onChange={e => upd("attended", e.target.checked)} style={{ width: 18, height: 18, cursor: "pointer", accentColor: "#00e676" }} />
@@ -401,9 +402,39 @@ export default function PlayersPage() {
                                                 <input type="number" min={0} value={stat.manOfMatch} onChange={e => upd("manOfMatch", Number(e.target.value))} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 8, padding: "6px 8px", color: "#fff", fontSize: 13, width: "100%", outline: "none", textAlign: "center" }} />
                                                 <input type="number" min={0} value={stat.mvpPoints} onChange={e => upd("mvpPoints", Number(e.target.value))} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 8, padding: "6px 8px", color: "#fff", fontSize: 13, width: "100%", outline: "none", textAlign: "center" }} />
                                             </div>
-                                        );
-                                    })}
-                                </div>
+
+                                            {/* Mobile card */}
+                                            <div className="ps-stats-mobile">
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                                                    <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                                                        {player.photoURL
+                                                            ? <img src={player.photoURL} alt={player.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                            : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#1a2540,#2a3a5c)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>{player.name[0]}</div>
+                                                        }
+                                                    </div>
+                                                    <span style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>{player.name}</span>
+                                                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                                                        <span style={{ color: "rgba(255,255,255,.4)", fontSize: 12 }}>Present</span>
+                                                        <input type="checkbox" checked={stat.attended} onChange={e => upd("attended", e.target.checked)} style={{ width: 20, height: 20, cursor: "pointer", accentColor: "#00e676" }} />
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                                                    {[
+                                                        { label: "Goals", field: "goals" as keyof PlayerSessionStats, value: stat.goals },
+                                                        { label: "Man of Match", field: "manOfMatch" as keyof PlayerSessionStats, value: stat.manOfMatch },
+                                                        { label: "MVP Pts", field: "mvpPoints" as keyof PlayerSessionStats, value: stat.mvpPoints },
+                                                    ].map(({ label, field, value }) => (
+                                                        <div key={field} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                                            <label style={{ color: "rgba(255,255,255,.4)", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{label}</label>
+                                                            <input type="number" min={0} value={value} onChange={e => upd(field, Number(e.target.value))}
+                                                                style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 8, padding: "8px", color: "#fff", fontSize: 14, width: "100%", outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,.08)", display: "flex", gap: 10, flexShrink: 0 }}>
@@ -437,6 +468,7 @@ export default function PlayersPage() {
                 .ps-col-pos     { }
 
                 /* ── PLAYER BANNER ── */
+                .ps-banner-stat-row { padding-bottom: 12px; margin-bottom: 12px; }
                 .ps-banner        { background: linear-gradient(135deg,#6b7db3 0%,#8b9dc3 100%); border-radius: 20px; padding: 32px; width: 100%; max-width: 600px; box-shadow: 0 20px 60px rgba(0,0,0,.8); position: relative; max-height: 90vh; overflow-y: auto; }
                 .ps-banner-inner  { display: flex; gap: 28px; align-items: flex-start; }
                 .ps-banner-photo  { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 4px solid rgba(255,255,255,.3); }
@@ -476,6 +508,29 @@ export default function PlayersPage() {
                         bottom: auto;
                         left: auto;
                     }
+                }
+
+                /* Stats modal */
+                .ps-stats-header {
+                    display: grid;
+                    grid-template-columns: 1fr 80px 70px 100px 80px;
+                    gap: 8px;
+                    padding: 12px 20px;
+                    border-bottom: 1px solid rgba(255,255,255,.07);
+                }
+                .ps-stats-row      { border-bottom: 1px solid rgba(255,255,255,.05); padding: 10px 0; }
+                .ps-stats-desktop  { display: grid; grid-template-columns: 1fr 80px 70px 100px 80px; gap: 8px; align-items: center; }
+                .ps-stats-mobile   { display: none; }
+
+                @media (max-width: 640px) {
+                    .ps-banner { padding: 16px 12px; width: calc(100% - 0px); }                    
+                    .ps-banner-inner { flex-direction: column; align-items: center; gap: 16px; }
+                    .ps-banner-photo { width: 100px; height: 100px; }
+                    .ps-banner-name  { font-size: 26px; margin-bottom: 16px; text-align: center; }
+                    .ps-banner-stat-row { padding-bottom: 12px; margin-bottom: 12px; }
+                    .ps-stats-header  { display: none; }
+                    .ps-stats-desktop { display: none; }
+                    .ps-stats-mobile  { display: block; background: rgba(255,255,255,.03); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
                 }
             `}</style>
         </div>
