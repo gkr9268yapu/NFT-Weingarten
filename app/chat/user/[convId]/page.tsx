@@ -7,7 +7,7 @@ import {
     sendPrivateDocumentMessage, sendPrivatePollMessage,
     deletePrivateMessageForMe, deletePrivateMessageForEveryone,
     togglePrivateReaction, markConversationRead, listenConversations,
-    voteOnPrivatePoll, closePrivatePoll, pinMessage, unpinMessage,
+    voteOnPrivatePoll, closePrivatePoll, pinMessage, unpinMessage, ensureConversationExists,
 } from "@/lib/firebaseDB";
 import ChatRoom from "@/components/ChatRoom";
 import type { Message, Conversation, ReplyTo, PollOption } from "@/lib/types";
@@ -28,10 +28,16 @@ export default function PrivateChatPage() {
 
     useEffect(() => {
         if (!currentUser || !convId) return;
-        const unsub = listenPrivateMessages(convId, setMessages);
-        markConversationRead(convId, currentUser.id);
-        return () => unsub();
-    }, [currentUser, convId]);
+        let unsub: (() => void) | undefined;
+        const otherId = convId.split("_").find(p => p !== currentUser.id) ?? "";
+        const otherName = users.find(u => u.id === otherId)?.name ?? otherId;
+        ensureConversationExists(convId, currentUser.id, currentUser.name, otherId, otherName)
+            .then(() => {
+                unsub = listenPrivateMessages(convId, setMessages);
+                markConversationRead(convId, currentUser.id);
+            });
+        return () => { if (unsub) unsub(); };
+    }, [currentUser, convId, users]);
 
     useEffect(() => {
         if (!currentUser) return;
