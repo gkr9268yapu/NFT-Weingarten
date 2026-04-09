@@ -28,10 +28,27 @@ export async function createMatch(data: Omit<Match, "id">): Promise<string> {
   const ref = await addDoc(collection(db, "matches"), { ...data, createdAt: serverTimestamp() });
   return ref.id;
 }
-export async function updateMatch(id: string, data: Partial<Omit<Match, "id">>): Promise<void> {
+export async function updateMatch(
+  id: string, data: Partial<Omit<Match, "id">>,
+  userId?: string, userRole?: string
+): Promise<void> {
+  if (userId && userRole !== "host") {
+    const snap = await getDoc(doc(db, "matches", id));
+    if (snap.exists() && snap.data().createdBy !== userId) {
+      throw new Error("Not authorized to edit this match");
+    }
+  }
   await updateDoc(doc(db, "matches", id), data);
 }
-export async function deleteMatch(id: string): Promise<void> {
+export async function deleteMatch(
+  id: string, userId?: string, userRole?: string
+): Promise<void> {
+  if (userId && userRole !== "host") {
+    const snap = await getDoc(doc(db, "matches", id));
+    if (snap.exists() && snap.data().createdBy !== userId) {
+      throw new Error("Not authorized to delete this match");
+    }
+  }
   await deleteDoc(doc(db, "matches", id));
 }
 export async function setAvailability(

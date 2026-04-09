@@ -26,6 +26,7 @@ export interface Match {
   expiryDate: string;
   available: string[];
   notAvailable: string[];
+  createdBy: string;
 }
 
 export type Reactions = Record<string, string[]>;

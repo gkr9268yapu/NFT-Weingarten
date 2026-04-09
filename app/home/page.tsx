@@ -15,7 +15,7 @@ const EMPTY_FORM = {
   title: "", team1: "", team2: "", date: "", time: "",
   venue: "", coach: "", description: "", expiryDate: "",
   image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=900&auto=format&fit=crop",
-  available: [] as string[], notAvailable: [] as string[],
+  available: [] as string[], notAvailable: [] as string[], createdBy: "",
 };
 
 export default function HomePage() {
@@ -34,7 +34,7 @@ export default function HomePage() {
       setShowProfileSetup(true);
     }
   }, [currentUser]);
-  
+
   // ✅ All hooks BEFORE any conditional return
   useEffect(() => {
     if (!loading && !currentUser) router.push("/");
@@ -43,7 +43,7 @@ export default function HomePage() {
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
-    </div>  );
+    </div>);
   if (!currentUser) return null;
 
   const today = new Date().toISOString().split("T")[0];
@@ -68,7 +68,7 @@ export default function HomePage() {
     if (!newForm.title || !newForm.team1 || !newForm.team2) return;
     setBusy(true);
     try {
-      await createMatch({ ...newForm, available: [], notAvailable: [] });
+      await createMatch({ ...newForm, available: [], notAvailable: [], createdBy: currentUser.id });
       // Notify all players about new match
       const { sendPushToAll } = await import("@/lib/notifications");
       await sendPushToAll(
@@ -87,7 +87,7 @@ export default function HomePage() {
     setBusy(true);
     try {
       const { id, ...data } = editMatch;
-      await updateMatch(id, data);
+      await updateMatch(id, data, currentUser.id, currentUser.role);
       // Notify all players that match was updated
       const { sendPushToAll } = await import("@/lib/notifications");
       await sendPushToAll(
@@ -101,7 +101,7 @@ export default function HomePage() {
   };
 
   const handleDeleteMatch = async (id: string) => {
-    if (confirm("Delete this match?")) await deleteMatch(id);
+    if (confirm("Delete this match?")) await deleteMatch(id, currentUser.id, currentUser.role);
   };
 
   const handleDeleteUser = async (uid: string) => {
@@ -121,7 +121,7 @@ export default function HomePage() {
             </h1>
             <p style={{ color: "rgba(255,255,255,.38)", marginTop: 8 }}>Mark your availability for upcoming games</p>
           </div>
-          {currentUser.role === "host" && (
+          {currentUser && (
             <button onClick={() => setShowAdd(true)} style={{
               background: "linear-gradient(135deg,#00e676,#00c853)", color: "#070d1a",
               border: "none", padding: "13px 26px", borderRadius: 12,
@@ -138,14 +138,17 @@ export default function HomePage() {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(360px,1fr))", gap: 28 }}>
-              {activeMatches.map(m => (
-                <MatchCard key={m.id} match={m} currentUser={currentUser}
-                  onAvailability={handleAvailability}
-                  onDetail={setDetailMatch}
-                  onEdit={setEditMatch}
-                  onDelete={handleDeleteMatch}
-                />
-              ))}
+              {activeMatches.map(m => {
+                const canManage = currentUser.role === "host" || currentUser.id === m.createdBy;
+                return (
+                  <MatchCard key={m.id} match={m} currentUser={currentUser}
+                    onAvailability={handleAvailability}
+                    onDetail={setDetailMatch}
+                    onEdit={canManage ? setEditMatch : undefined}
+                    onDelete={canManage ? handleDeleteMatch : undefined}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
