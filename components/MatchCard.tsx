@@ -42,7 +42,7 @@ export default function MatchCard({ match, currentUser, onAvailability, onDetail
         }}>DETAIL</button>
 
         {/* Host controls */}
-        {isHost && (
+        {(onEdit || onDelete) && (
           <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6 }}>
             <button onClick={() => onEdit?.(match)} style={{ background: "rgba(0,112,255,.22)", backdropFilter: "blur(8px)", border: "1px solid rgba(0,112,255,.4)", color: "#4da6ff", padding: "5px 11px", borderRadius: 7, fontSize: 12, fontWeight: 700 }}>Edit</button>
             <button onClick={() => onDelete?.(match.id)} style={{ background: "rgba(255,82,82,.22)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,82,82,.4)", color: "#ff5252", padding: "5px 11px", borderRadius: 7, fontSize: 12, fontWeight: 700 }}>Delete</button>
