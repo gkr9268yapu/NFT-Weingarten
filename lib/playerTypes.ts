@@ -12,6 +12,7 @@ export interface CalendarSession {
 export interface PlayerSessionStats {
     attended: boolean;
     goals: number;
+    assists: number;
     manOfMatch: number;
     mvpPoints: number;
 }
@@ -31,6 +32,7 @@ export interface ComputedPlayerStats {
     position?: string;
     attendance: number;    // percentage
     goals: number;
+    assists: number;
     manOfMatch: number;
     mvpPoints: number;
     totalPoints: number;

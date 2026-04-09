@@ -135,6 +135,7 @@ export function computeStats(
 
         let attendedSessions = 0;
         let goals = 0;
+        let assists = 0;
         let manOfMatch = 0;
         let mvpPoints = 0;
 
@@ -145,6 +146,7 @@ export function computeStats(
                 if (!sessionExists) continue;
                 if (sessionStat.attended) attendedSessions++;
                 goals += sessionStat.goals ?? 0;
+                assists += sessionStat.assists ?? 0;
                 manOfMatch += sessionStat.manOfMatch ?? 0;
                 mvpPoints += sessionStat.mvpPoints ?? 0;
             }
@@ -153,7 +155,9 @@ export function computeStats(
         const attendance = totalSessions > 0
             ? Math.round((attendedSessions / totalSessions) * 100)
             : 0;
-        const totalPoints = attendedSessions + (goals * 3) + mvpPoints + (manOfMatch * 3);
+
+        // Total Points = Attendance + (Goals x 3) + Assists x 1 + MVP Points + (Man of Match x 3)
+        const totalPoints = attendance + (goals * 3) + assists + mvpPoints + (manOfMatch * 3);
 
         return {
             playerId: player.id,
@@ -162,6 +166,7 @@ export function computeStats(
             position: player.position,
             attendance,
             goals,
+            assists,
             manOfMatch,
             mvpPoints,
             totalPoints,
