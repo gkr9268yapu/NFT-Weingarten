@@ -20,9 +20,9 @@ service cloud.firestore {
 
     match /matches/{matchId} {
       allow read:   if isSignedIn();
-      allow create: if isHost();
-      allow update: if isSignedIn();
-      allow delete: if isHost();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isHost() || request.auth.uid == resource.data.createdBy);
+      allow delete: if isSignedIn() && (isHost() || request.auth.uid == resource.data.createdBy);
     }
 
     match /messages/{msgId} {
