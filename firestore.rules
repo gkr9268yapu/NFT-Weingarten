@@ -1,7 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     function isSignedIn() { return request.auth != null; }
     function isHost() {
       return isSignedIn() &&
@@ -10,28 +9,34 @@ service cloud.firestore {
     function isParticipant(convId) {
       return request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
     }
-
     match /users/{uid} {
       allow read:   if true;
       allow create: if true;
       allow update: if isSignedIn();
       allow delete: if isHost();
     }
-
-match /matches/{matchId} {
-  allow read:   if isSignedIn();
-  allow create: if isSignedIn();
-  allow update: if isSignedIn();
-  allow delete: if isSignedIn() && (isHost() || request.auth.uid == resource.data.createdBy);
-}
-
+    match /matches/{matchId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() && (isHost() || request.auth.uid == resource.data.createdBy);
+    }
+    match /calendarSessions/{docId} {
+      allow read:   if isSignedIn();
+      allow create: if isHost();
+      allow update: if isHost();
+      allow delete: if isHost();
+    }
+    match /playerStats/{docId} {
+      allow read:   if isSignedIn();
+      allow write:  if isHost();
+    }
     match /messages/{msgId} {
       allow read:   if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
       allow delete: if isHost();
     }
-
     match /conversations/{convId} {
       allow read:   if isSignedIn();
       allow create: if isSignedIn();
@@ -44,12 +49,10 @@ match /matches/{matchId} {
         allow delete: if isSignedIn() && isParticipant(convId);
       }
     }
-
     match /media/{docId} {
       allow read:  if isSignedIn();
       allow write: if true;
     }
-
     match /config/googleDriveToken {
       allow read, write: if isHost();
     }
