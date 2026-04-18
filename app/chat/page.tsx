@@ -15,6 +15,7 @@ import BellSlashIcon from "@/components/icons/BellSlashIcon";
 import BellIcon from "@/components/icons/BellIcon";
 import CheckSquareIcon from "@/components/icons/CheckSquareIcon";
 import TrashAltIcon from "@/components/icons/TrashAltIcon";
+import { ChatSkeleton } from "@/components/Skeletons";
 
 const MUTE_OPTIONS = [
   { label: "1 hour", ms: 1 * 60 * 60 * 1000 },
@@ -56,11 +57,8 @@ export default function ChatListPage() {
     return () => document.removeEventListener("click", handler);
   }, [ctxConv]);
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }} />
-    </div>
-  );
+  if (loading) return <ChatSkeleton />;
+
   if (!currentUser) return null;
 
   const otherUsers = users.filter(u => u.id !== currentUser.id);

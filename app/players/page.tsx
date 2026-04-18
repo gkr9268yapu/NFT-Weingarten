@@ -9,6 +9,7 @@ import {
 } from "@/lib/playerDB";
 import type { CalendarSession, SessionType, ComputedPlayerStats, PlayerSessionStats } from "@/lib/playerTypes";
 import EditAltIcon from "@/components/icons/EditAltIcon";
+import { PlayersSkeleton } from "@/components/Skeletons";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -70,7 +71,8 @@ export default function PlayersPage() {
         return () => document.removeEventListener("mousedown", h);
     }, [showMenu]);
 
-    if (loading) return <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}><img src="/logo.png" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }} /></div>;
+    if (loading) return <PlayersSkeleton />;
+    
     if (!currentUser) return null;
 
     const isHost = currentUser.role === "host";
@@ -161,8 +163,8 @@ export default function PlayersPage() {
                     <div className="ps-row ps-row-header">
                         <div className="ps-col-rank" style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>Rank</div>
                         <div className="ps-col-name" style={{ color: "#ff5252", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>Name</div>
-                        <div className="ps-col-pos" style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>Position</div>
-                        <div className="ps-col-mvp" style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase" }}>MVP</div>
+                        <div className="ps-col-pos" style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase"  }}>Position</div>
+                        <div className="ps-col-mvp" style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, textTransform: "uppercase", marginLeft: 12 }}>MVP</div>
                     </div>
 
                     {computed.length === 0 ? (
@@ -195,7 +197,7 @@ export default function PlayersPage() {
                                 {player.position ?? "—"}
                             </div>
                             {/* MVP Points */}
-                            <div className="ps-col-mvp" style={{ color: "#FFD700", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 16, fontWeight: 700, textAlign: "center" }}>
+                            <div className="ps-col-mvp" style={{ color: "#FFD700", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 16, fontWeight: 700, textAlign: "left", marginRight: 12 }}>
                                 ⭐ {player.mvpPoints}
                             </div>
                         </div>

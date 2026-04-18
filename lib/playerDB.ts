@@ -155,9 +155,8 @@ export function computeStats(
         const attendance = totalSessions > 0
             ? Math.round((attendedSessions / totalSessions) * 100)
             : 0;
-
-        // Total Points = Attendance + (Goals x 3) + Assists x 1 + MVP Points + (Man of Match x 3)
-        const totalPoints = attendance + (goals * 3) + assists + mvpPoints + (manOfMatch * 3);
+            
+        const totalPoints = (goals * 3) + (assists * 2) + (mvpPoints * 3) + (manOfMatch * 1);
 
         return {
             playerId: player.id,

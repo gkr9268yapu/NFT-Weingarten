@@ -5,6 +5,7 @@ import { useApp } from "@/lib/AppContext";
 import Navbar from "@/components/Navbar";
 import type { MediaItem } from "@/lib/types";
 import CheckSquareIcon from "@/components/icons/CheckSquareIcon";
+import { MediaSkeleton } from "@/components/Skeletons";
 
 export default function MediaPage() {
   const { currentUser, mediaItems, users, loading } = useApp();
@@ -37,10 +38,8 @@ export default function MediaPage() {
   const canDownloadSel = isHost || selectedItems.length > 0;
   const canDeleteSelected = isHost || (mySelected.length === selectedItems.length && selectedItems.length > 0 && othersSelected.length === 0);
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#070d1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <img src="/logo.png" alt="NFT Weingarten" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", animation: "pulse 1.2s infinite" }} />
-    </div>  );
+  if (loading) return <MediaSkeleton />;
+  
   if (!currentUser) { router.push("/"); return null; }
 
   const uploadOne = async (file: File) => {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUp, logIn } from "@/lib/firebaseAuth";
 import { useApp } from "@/lib/AppContext";
+import { LoginSkeleton } from "@/components/Skeletons";
 
 const IS = {
   width: "100%",
@@ -53,11 +54,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#070d1a" }}>
-      <img src="/logo.png" alt="Club Logo" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} />
-    </div>
-  );
+  if (loading) return <LoginSkeleton />;
 
   const passResults = PASS_RULES.map(r => ({ label: r.label, ok: r.test(password) }));
   const passValid = passResults.every(r => r.ok);
